@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.3.1
+// @version      0.3.2
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤官种和保种中的种子，新增一列快速认领
+// @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，以及imdb大于输入值 的种子
 // @author       ccf2012
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
@@ -13,6 +13,7 @@
 // @match        https://pterclub.com/officialgroup*
 // @match        https://chdbits.co/torrents.php*
 // @match        https://audiences.me/torrents.php*
+// @match        https://ourbits.club/torrents.php*
 
 // ==/UserScript==
 
@@ -59,6 +60,19 @@ const ade_seeding = (element) => {
     var d = $(element).find("div.torrents-progress");
     return (d.length > 0 && d.css("width") != '0px')
     // return d.text() === "100%";
+};
+
+const ob_imdb = (element) => {
+    var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(1) > em > label");
+    return t.text();
+};
+const ob_douban = (element) => {
+    var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(2) > em > label");
+    return d.text();
+};
+const ob_seeding = (element) => {
+    var d = $(element).find("div.progressBar");
+    return ((d.length > 0) && (d.attr("title").startsWith('100')))
 };
 
 
@@ -123,6 +137,25 @@ var config = [
         funcDouban:ade_douban,
         funcSeeding: ade_seeding,    
       },
+      {
+        host: "ourbits.club",
+        eleTorTable: "#torrenttable",
+        eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(7) > font",
+        eleTorList: "#torrenttable > tbody > tr",
+        eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+        eleTorItemSize: "td:nth-child(5)",
+        eleTorItemSeednum: "td:nth-child(6)",
+        eleTorItemAdded: "td:nth-child(4) > span",
+        useTitleName: 1,
+        eleIntnTag: "div.tag-gf",
+        eleCnLangTag: "div.tag-gy",
+        eleCnSubTag: "div.tag-zz",
+        eleDownLink: "td > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+        eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+        funcIMDb:ob_imdb,
+        funcDouban:ob_douban,
+        funcSeeding: ob_seeding,    
+      },      
 ]
 
 
