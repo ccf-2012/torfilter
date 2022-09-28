@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.3.3
+// @version      0.3.4
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，描述不含，以及imdb大于输入值 的种子
 // @author       ccf2012
@@ -14,6 +14,7 @@
 // @match        https://chdbits.co/torrents.php*
 // @match        https://audiences.me/torrents.php*
 // @match        https://ourbits.club/torrents.php*
+// @match        https://springsunday.net/torrents.php*
 
 // ==/UserScript==
 
@@ -73,6 +74,31 @@ const ob_douban = (element) => {
 const ob_seeding = (element) => {
     var d = $(element).find("div.progressBar");
     return ((d.length > 0) && (d.attr("title").startsWith('100')))
+};
+
+
+const ssd_imdb = (element) => {
+    var t = $(element).find("td:nth-child(3) > div:nth-child(1) > a > span");
+    let imdb = "";
+    if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")){
+        imdb = t.text()
+    }
+    return imdb;
+};
+const ssd_douban = (element) => {
+    var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
+    if (!d){
+        d = $(element).find("td:nth-child(3) > div > a > span");
+    }
+    let douban = "";
+    if (t.parent().attr("href") && t.parent().attr("href").includes("douban")){
+        douban = t.text()
+    }
+    return douban;
+};
+const ssd_seeding = (element) => {
+    var d = $(element).find("div.p_seeding");
+    return (d.length > 0);
 };
 
 
@@ -154,18 +180,35 @@ var config = [
         eleIntnTag: "div.tag-gf",
         eleCnLangTag: "div.tag-gy",
         eleCnSubTag: "div.tag-zz",
-        eleDownLink: "td > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+        eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(5) > a:nth-child(1)",
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
         funcIMDb:ob_imdb,
         funcDouban:ob_douban,
         funcSeeding: ob_seeding,    
+      },
+      {
+        host: "springsunday.net",
+        eleTorTable: "table.torrents",
+        eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
+        eleTorList: "table.torrents > tbody > tr",
+        eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+        eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+        eleTorItemSize: "td:nth-child(6)",
+        eleTorItemSeednum: "td:nth-child(7)",
+        eleTorItemAdded: "td:nth-child(5) > span",
+        useTitleName: 1,
+        eleIntnTag: "",
+        eleCnLangTag: "",
+        eleCnSubTag: "",
+        eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+        eleCatImg: "td:nth-child(1) > a > img",
+        funcIMDb:ssd_imdb,
+        funcDouban:ssd_douban,
+        funcSeeding: ssd_seeding,    
       },      
 ]
 
 
-
-
-  
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
 
 function addFilterPanel() {
@@ -216,6 +259,7 @@ var onClickFilterList = (html) => {
     $("#process-log").text("处理中...");
     let torlist = $(html).find(THISCONFIG.eleTorList);
 
+    debugger;
     let filterCount = 0;
     for (let index = 1; index < torlist.length; ++index) {
         let element = torlist[index];
