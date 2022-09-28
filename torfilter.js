@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.3.2
+// @version      0.3.3
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，以及imdb大于输入值 的种子
+// @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，描述不含，以及imdb大于输入值 的种子
 // @author       ccf2012
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
@@ -23,11 +23,11 @@ const not_supported  = (element) => {
   };
   
 const pter_imdb = (element) => {
-    var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(7) > a:nth-child(1) > span");
+    var t = $(element).find("td:nth-child(2) > table > tbody > tr > td > a:nth-child(1) > span");
     return t.text();
 };
 const pter_douban = (element) => {
-    var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(7) > a:nth-child(2) > span");
+    var d = $(element).find("td:nth-child(2) > table > tbody > tr > td > a:nth-child(2) > span");
     return d.text();
 };
 
@@ -83,7 +83,8 @@ var config = [
         eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font",
         eleTorList: "#torrenttable > tbody > tr",
         eleTorItem:
-            "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div > div:nth-child(1) > a",
+            " table > tbody > tr > td > div > div:nth-child(1) > a",
+        eleTorItemDesc: "table > tbody > tr > td > div > div:nth-child(2) > span",
         eleTorItemSize: "td:nth-child(5)",
         eleTorItemSeednum: "td:nth-child(6)",
         eleTorItemAdded: "td:nth-child(4) > span",
@@ -92,7 +93,7 @@ var config = [
         eleCnLangTag: "a.chs_tag-gy",
         eleCnSubTag: "a.chs_tag-sub",
         // eleCHNAreaTag: "img.chn",
-        eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(5) > a",
+        eleDownLink: "td:nth-child(2) > table > tbody > tr > td > a:first",
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
         funcIMDb:pter_imdb,
         funcDouban:pter_douban,
@@ -104,6 +105,7 @@ var config = [
         eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
         eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
         eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+        eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > font",
         eleTorItemSize: "td:nth-child(5)",
         eleTorItemSeednum: "td:nth-child(6)",
         eleTorItemAdded: "td:nth-child(4) > span",
@@ -124,6 +126,7 @@ var config = [
         eleTorList: "#torrenttable > tbody > tr",
         eleTorItem:
           "td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(1) > a",
+        eleTorItemDesc: "td > div.torrents-name > table > tbody > tr > td:nth-child(1) > span",
         eleTorItemSize: "td:nth-child(5)",
         eleTorItemSeednum: "td:nth-child(6)",
         eleTorItemAdded: "td:nth-child(4) > span",
@@ -143,6 +146,7 @@ var config = [
         eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(7) > font",
         eleTorList: "#torrenttable > tbody > tr",
         eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+        eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
         eleTorItemSize: "td:nth-child(5)",
         eleTorItemSeednum: "td:nth-child(6)",
         eleTorItemAdded: "td:nth-child(4) > span",
@@ -178,10 +182,14 @@ function addFilterPanel() {
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
     </td>
-    <td style='width: 150px; border: none;'>
-    <div>标题不含 <input style='width: 80px;' id='titleregex' value="" />
+    <td style='width: 180px; border: none;'>
+    <div>标题不含 <input style='width: 100px;' id='titleregex' value="" />
     </div>
-
+    </td>    
+    <td style='width: 180px; border: none;'>
+    <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
+    </div>
+    </td>    
     <td style='width: 90px; border: none;'>
     <div>IMDb > <input style='width: 30px;' id='minimdb' value="0" />
     </div>
@@ -213,6 +221,7 @@ var onClickFilterList = (html) => {
         let element = torlist[index];
         let item = $(element).find(THISCONFIG.eleTorItem);
         let titlestr = '';
+
         if (item.length <= 0 ) {
             continue;
         }
@@ -229,7 +238,7 @@ var onClickFilterList = (html) => {
             }
         }     
 
-
+        // debugger;
         let imdbval = parseFloat(THISCONFIG.funcIMDb(element))  || 0.0;
         let imdbminval = parseFloat($("#minimdb").val()) || 0.0;
         let keepShow = true;
@@ -237,8 +246,15 @@ var onClickFilterList = (html) => {
             keepShow = false;
         }
         if ($("#titleregex").val()){
-            let regex = new RegExp( $("#titleregex").val(), 'g');
+            let regex = new RegExp( $("#titleregex").val(), 'gi');
             if (titlestr.match(regex)) {
+                keepShow = false;
+            }
+        }
+        if ($("#titledescregex").val()){
+            let regex = new RegExp( $("#titledescregex").val(), 'gi');
+            titledesc = $(element).find(THISCONFIG.eleTorItemDesc);
+            if (titledesc.text().match(regex)) {
                 keepShow = false;
             }
         }
@@ -273,10 +289,10 @@ function onClickDownloadFiltered(html) {
     var resulttext = '';
     for (let index = 1; index < torlist.length; ++index) {
         if ($(torlist[index]).is(":visible")) {
-            var hrefele = torlist[index].querySelector(THISCONFIG.eleDownLink)
+            let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink)
 
             if (hrefele) {
-                resulttext += hrefele.href + '\n'
+                resulttext += hrefele.prop('href') + '\n'
             }
         }
     }
