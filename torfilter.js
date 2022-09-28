@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.3.4
+// @version      0.4
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，描述不含，以及imdb大于输入值 的种子
 // @author       ccf2012
@@ -44,7 +44,6 @@ const chd_imdb = (element) => {
 
 const chd_seeding = (element) => {
     var d = $(element).find("td:nth-child(10)");
-    // debugger;
     return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
     // return (d.text() === "100%")
 };
@@ -121,6 +120,8 @@ var config = [
         // eleCHNAreaTag: "img.chn",
         eleDownLink: "td:nth-child(2) > table > tbody > tr > td > a:first",
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+        filterGY: true,
+        filterZZ: true,
         funcIMDb:pter_imdb,
         funcDouban:pter_douban,
         funcSeeding: pter_seeding,    
@@ -141,6 +142,8 @@ var config = [
         eleCnSubTag: "div.tag-sub",
         eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+        filterGY: true,
+        filterZZ: true,
         funcIMDb:chd_imdb,
         funcDouban:not_supported,
         funcSeeding: chd_seeding,    
@@ -162,6 +165,8 @@ var config = [
         eleCnSubTag: "span.tzz",
         eleDownLink: "td > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
         eleCatImg: "td:nth-child(1) > a > img",
+        filterGY: true,
+        filterZZ: true,
         funcIMDb:ade_imdb,
         funcDouban:ade_douban,
         funcSeeding: ade_seeding,    
@@ -182,6 +187,8 @@ var config = [
         eleCnSubTag: "div.tag-zz",
         eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(5) > a:nth-child(1)",
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+        filterGY: true,
+        filterZZ: true,
         funcIMDb:ob_imdb,
         funcDouban:ob_douban,
         funcSeeding: ob_seeding,    
@@ -202,6 +209,8 @@ var config = [
         eleCnSubTag: "",
         eleDownLink: "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
         eleCatImg: "td:nth-child(1) > a > img",
+        filterGY: false,
+        filterZZ: false,
         funcIMDb:ssd_imdb,
         funcDouban:ssd_douban,
         funcSeeding: ssd_seeding,    
@@ -219,12 +228,23 @@ function addFilterPanel() {
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
     </td>
-    <td style='width: 70px; border: none;'>
-    <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
-    </td>
+    `
+    if (THISCONFIG.filterGY){
+        donwnloadPanel +=     `
+        <td style='width: 70px; border: none;'>
+        <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
+        </td>
+`    
+    }
+    if (THISCONFIG.filterZZ){
+        donwnloadPanel +=     `
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
     </td>
+    `
+    }
+    donwnloadPanel +=
+    `
     <td style='width: 180px; border: none;'>
     <div>标题不含 <input style='width: 100px;' id='titleregex' value="" />
     </div>
@@ -259,7 +279,6 @@ var onClickFilterList = (html) => {
     $("#process-log").text("处理中...");
     let torlist = $(html).find(THISCONFIG.eleTorList);
 
-    debugger;
     let filterCount = 0;
     for (let index = 1; index < torlist.length; ++index) {
         let element = torlist[index];
@@ -282,7 +301,6 @@ var onClickFilterList = (html) => {
             }
         }     
 
-        // debugger;
         let imdbval = parseFloat(THISCONFIG.funcIMDb(element))  || 0.0;
         let imdbminval = parseFloat($("#minimdb").val()) || 0.0;
         let keepShow = true;
@@ -309,10 +327,10 @@ var onClickFilterList = (html) => {
         if ($("#seeding").is(":checked") && THISCONFIG.funcSeeding(element)) {
             keepShow = false;
         }
-        if ($("#chnsub").is(":checked") && $(torlist[index]).find(THISCONFIG.eleCnSubTag).length <= 0) {
+        if (THISCONFIG.filterZZ && $("#chnsub").is(":checked") && $(torlist[index]).find(THISCONFIG.eleCnSubTag).length <= 0) {
             keepShow = false;
         }
-        if ($("#nochnlang").is(":checked") && $(torlist[index]).find(THISCONFIG.eleCnLangTag).length > 0) {
+        if (THISCONFIG.filterGY && $("#nochnlang").is(":checked") && $(torlist[index]).find(THISCONFIG.eleCnLangTag).length > 0) {
             keepShow = false;
         }
 
