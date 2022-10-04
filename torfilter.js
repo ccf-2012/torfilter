@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.4
+// @version      0.5
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种， 无国语，有中字，标题不含，描述不含，以及imdb大于输入值 的种子
+// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，以及imdb大于输入值 的种子
 // @author       ccf2012
+// @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
 // @grant        GM_xmlhttpRequest
@@ -217,7 +218,7 @@ var config = [
       },      
 ]
 
-
+  
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
 
 function addFilterPanel() {
@@ -228,23 +229,12 @@ function addFilterPanel() {
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
     </td>
-    `
-    if (THISCONFIG.filterGY){
-        donwnloadPanel +=     `
-        <td style='width: 70px; border: none;'>
-        <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
-        </td>
-`    
-    }
-    if (THISCONFIG.filterZZ){
-        donwnloadPanel +=     `
+    <td style='width: 70px; border: none;'>
+    <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
+    </td>
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
     </td>
-    `
-    }
-    donwnloadPanel +=
-    `
     <td style='width: 180px; border: none;'>
     <div>标题不含 <input style='width: 100px;' id='titleregex' value="" />
     </div>
@@ -253,6 +243,12 @@ function addFilterPanel() {
     <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
     </div>
     </td>    
+
+    <td style='width: 110px; border: none;'>
+    <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
+    </div>
+    </td>    
+
     <td style='width: 90px; border: none;'>
     <div>IMDb > <input style='width: 30px;' id='minimdb' value="0" />
     </div>
@@ -273,12 +269,102 @@ function addFilterPanel() {
     </table>
 `
     torTable.before(donwnloadPanel);
+
+    if (!THISCONFIG.filterGY) { $('#chnsub').parent().hide() }
+    if (!THISCONFIG.filterZZ) { $('#nochnlang').parent().hide() }
+}
+
+  
+function sizeStrToGB(sizeStr) {
+    var regex = /[+-]?\d+(\.\d+)?/g;
+    var sizeStr2 = sizeStr.replace(/,/g, '');
+    var num = sizeStr2.match(regex).map(function (v) {
+      return parseFloat(v);
+    });
+    var size = 0;
+    if (sizeStr.match(/(KB|KiB)/i)) {
+      size = num / 1024.0 / 1024.0;
+    } else if (sizeStr.match(/(MB|MiB)/i)) {
+      size = num / 1024.0;
+    } else if (sizeStr.match(/(GB|GiB)/i)) {
+      size = num ;
+    } else if (sizeStr.match(/(TB|TiB)/i)) {
+      size = num * 1024.0;
+    } else {
+      size = num / 1024.0 / 1024.0 / 1024.0;
+    }
+  
+    return size ;
+}
+
+function getTorSizeRange(rangestr) {
+    let m = rangestr.match(/(\d+)([,，]\s*(\d+))?/);
+    if (m) {
+        return [parseInt(m[1]) || 0, parseInt(m[3]) || 0]
+    }
+    return [0, 0]
+}
+
+
+function saveToCookie(filterParam) {
+    var cookie_name = "filterParam";
+    var cookie_value = filterParam;
+    var d = new Date();
+    // change expire time here, 60 * 1000 for 1 minute
+    // d.setTime(d.getTime() + ( 60 * 1000));
+    // this is 3 days
+    d.setTime(d.getTime() + ( 3 * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + d.toUTCString();
+    document.cookie = cookie_name + "=" + cookie_value + ";" + expires + ";path=/";
+}
+
+function saveParamToCookie() {
+    let paramStr = 'minimdb='+$("#minimdb").val()
+        + '&sizerange='+$("#sizerange").val()
+        + '&titleregex='+$("#titleregex").val()
+        + '&descregex='+$("#titledescregex").val()
+        + '&seeding='+$("#seeding").is(":checked")
+        + '&chnsub='+$("#chnsub").is(":checked")
+        + '&nochnlang='+$("#nochnlang").is(":checked")
+    saveToCookie(paramStr)
+}
+
+const getCookieValue = (name) => (
+    document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')?.pop() || ''
+)
+
+function loadParamFromCookie() {
+    var cc = getCookieValue("filterParam");
+    if (cc) {
+        // console.log('Get from cookie:'+cc);
+        fillParam(cc);
+    }
+}
+
+function fillParam(filterParam)
+{
+    var paraList = filterParam.split('&')
+    // debugger;
+    for (var i = 0; i < paraList.length; i++) {
+        var m = paraList[i].match(/(\w+)\=(.*)/);
+        if (m) {
+            if (m[1] == 'minimdb') { $("#minimdb").val(m[2])}
+            if (m[1] == 'sizerange') { $("#sizerange").val(m[2])}
+            if (m[1] == 'titleregex') { $("#titleregex").val(m[2])}
+            if (m[1] == 'descregex') { $("#titledescregex").val(m[2])}
+            if (m[1] == 'seeding') { $("#seeding").prop('checked', m[2] == 'true') }
+            if (m[1] == 'chnsub') { $("#chnsub").prop('checked', m[2] == 'true') }
+            if (m[1] == 'nochnlang') { $("#nochnlang").prop('checked', m[2] == 'true') }
+        }
+    }
 }
 
 var onClickFilterList = (html) => {
     $("#process-log").text("处理中...");
     let torlist = $(html).find(THISCONFIG.eleTorList);
-
+    let imdbminval = parseFloat($("#minimdb").val()) || 0.0;
+    let sizerange = getTorSizeRange($("#sizerange").val());
+    saveParamToCookie();
     let filterCount = 0;
     for (let index = 1; index < torlist.length; ++index) {
         let element = torlist[index];
@@ -299,11 +385,30 @@ var onClickFilterList = (html) => {
               if (eletitle.data) titlestr = eletitle.data
               else if (eletitle.firstChild.data) titlestr = eletitle.firstChild.data
             }
-        }     
+        } 
+        let keepShow = true;
+
+        if (sizerange[0] || sizerange[1]) {
+            let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
+            let torsize = 0;
+            if (sizestr){
+                torsize = sizeStrToGB(sizestr);
+            }
+            if (sizerange[0] && torsize < sizerange[0]) { keepShow = false; }
+            if (sizerange[1] && torsize > sizerange[1]) { keepShow = false; }
+        }
+
+        var seednum = $(element).find(THISCONFIG.eleTorItemSeednum).text().trim();
+        seednum = seednum.replace(/\,/g, "");
+        if (!seednum) { seednum = " "; }
+
+        var tortime;
+        if ($(element).find(THISCONFIG.eleTorItemAdded)[0]) {
+          tortime = $(element).find(THISCONFIG.eleTorItemAdded)[0].title;
+        }
+        if (!tortime) { tortime = " "; }
 
         let imdbval = parseFloat(THISCONFIG.funcIMDb(element))  || 0.0;
-        let imdbminval = parseFloat($("#minimdb").val()) || 0.0;
-        let keepShow = true;
         if ( imdbminval > 0.1 && imdbval < imdbminval){
             keepShow = false;
         }
@@ -315,7 +420,7 @@ var onClickFilterList = (html) => {
         }
         if ($("#titledescregex").val()){
             let regex = new RegExp( $("#titledescregex").val(), 'gi');
-            titledesc = $(element).find(THISCONFIG.eleTorItemDesc);
+            let titledesc = $(element).find(THISCONFIG.eleTorItemDesc);
             if (titledesc.text().match(regex)) {
                 keepShow = false;
             }
@@ -393,6 +498,7 @@ function addAdoptColumn(html) {
     if (THISCONFIG) {
         addAdoptColumn(document);
         addFilterPanel();
+        loadParamFromCookie();
         $("#btn-filterlist").click(function () {
             onClickFilterList(document);
         });
