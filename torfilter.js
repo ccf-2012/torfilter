@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.5.1
+// @version      0.5.3
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，以及imdb大于输入值 的种子
+// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
@@ -22,8 +22,13 @@
 
 const not_supported  = (element) => {
     return  ''
-  };
-  
+};
+
+const skip_passkey = async () => {
+    return ''
+}
+
+//  ====== pter
 const pter_imdb = (element) => {
     var t = $(element).find("td:nth-child(2) > table > tbody > tr > td > a:nth-child(1) > span");
     return t.text();
@@ -38,6 +43,7 @@ const pter_seeding = (element) => {
     return (d.length > 0);
 };
 
+//  ====== chd
 const chd_imdb = (element) => {
     var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2)");
     return t.text();
@@ -49,6 +55,7 @@ const chd_seeding = (element) => {
     // return (d.text() === "100%")
 };
 
+//  ====== ade
 const ade_imdb = (element) => {
     var t = $(element).find("td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)");
     return t.text();
@@ -63,6 +70,7 @@ const ade_seeding = (element) => {
     // return d.text() === "100%";
 };
 
+//  ====== ob
 const ob_imdb = (element) => {
     var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(1) > em > label");
     return t.text();
@@ -76,7 +84,27 @@ const ob_seeding = (element) => {
     return ((d.length > 0) && (d.attr("title").startsWith('100')))
 };
 
+const getCpPage = async (url) => {
+    return await $.get(url);
+};
 
+const ob_passkey = async () => {
+    let html = await getCpPage("usercp.php");
+    let passkeyRow = $(html).find('tr:contains("密钥"):last');
+    if (passkeyRow.length <= 0) {
+        passkeyRow = $(html).find('tr:contains("密匙"):last');
+    }
+    if (passkeyRow.length <= 0) {
+        passkeyRow = $(html).find('tr:contains("Passkey"):last');
+    }
+    if (passkeyRow.length > 0){
+        let key = passkeyRow.find('td:last').text();
+        return "&passkey=" + key.trim() + "&https=1" ;    
+    }
+    return "" ;
+};
+
+//  ====== ssd
 const ssd_imdb = (element) => {
     var t = $(element).find("td:nth-child(3) > div:nth-child(1) > a > span");
     let imdb = "";
@@ -85,22 +113,33 @@ const ssd_imdb = (element) => {
     }
     return imdb;
 };
+
 const ssd_douban = (element) => {
     var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
-    if (!d){
+    if (d.length <= 0){
         d = $(element).find("td:nth-child(3) > div > a > span");
     }
     let douban = "";
-    if (t.parent().attr("href") && t.parent().attr("href").includes("douban")){
-        douban = t.text()
+    if (d.parent().attr("href") && d.parent().attr("href").includes("douban")){
+        douban = d.text()
     }
     return douban;
 };
+
 const ssd_seeding = (element) => {
     var d = $(element).find("div.p_seeding");
     return (d.length > 0);
 };
 
+const ssd_passkey = async () => {
+    let html = await getCpPage("usercp.php");
+    let passkeyRow = $(html).find('tr:contains("密钥"):last');
+    if (passkeyRow.length > 0){
+        var key = passkeyRow.find('td:last').text();
+        return "&passkey=" + key.trim() + "&https=1";
+    }
+    return "" ;
+}
 
 var config = [
     {
@@ -126,6 +165,7 @@ var config = [
         funcIMDb:pter_imdb,
         funcDouban:pter_douban,
         funcSeeding: pter_seeding,    
+        funcGetPasskey: skip_passkey,  
     },
     {
         host: "chdbits.co",
@@ -148,6 +188,7 @@ var config = [
         funcIMDb:chd_imdb,
         funcDouban:not_supported,
         funcSeeding: chd_seeding,    
+        funcGetPasskey: skip_passkey,  
       },
       {
         host: "audiences.me",
@@ -171,6 +212,7 @@ var config = [
         funcIMDb:ade_imdb,
         funcDouban:ade_douban,
         funcSeeding: ade_seeding,    
+        funcGetPasskey: skip_passkey,  
       },
       {
         host: "ourbits.club",
@@ -192,7 +234,8 @@ var config = [
         filterZZ: true,
         funcIMDb:ob_imdb,
         funcDouban:ob_douban,
-        funcSeeding: ob_seeding,    
+        funcSeeding: ob_seeding,
+        funcGetPasskey: ob_passkey,  
       },
       {
         host: "springsunday.net",
@@ -214,8 +257,9 @@ var config = [
         filterZZ: false,
         funcIMDb:ssd_imdb,
         funcDouban:ssd_douban,
-        funcSeeding: ssd_seeding,    
-      },      
+        funcSeeding: ssd_seeding,
+        funcGetPasskey: ssd_passkey,  
+    },
 ]
 
   
@@ -235,7 +279,7 @@ function addFilterPanel() {
     <td style='width: 70px; border: none;'>
     <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
     </td>
-    <td style='width: 180px; border: none;'>
+    <td style='width: 170px; border: none;'>
     <div>标题不含 <input style='width: 100px;' id='titleregex' value="" />
     </div>
     </td>    
@@ -244,13 +288,13 @@ function addFilterPanel() {
     </div>
     </td>    
 
-    <td style='width: 110px; border: none;'>
+    <td style='width: 120px; border: none;'>
     <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
     </div>
     </td>    
 
-    <td style='width: 90px; border: none;'>
-    <div>IMDb > <input style='width: 30px;' id='minimdb' value="0" />
+    <td style='width: 140px; border: none;'>
+    <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
     </div>
     </td>    
     <td style='width: 70px; border: none;'>
@@ -344,7 +388,6 @@ function loadParamFromCookie() {
 function fillParam(filterParam)
 {
     var paraList = filterParam.split('&')
-    // debugger;
     for (var i = 0; i < paraList.length; i++) {
         var m = paraList[i].match(/(\w+)\=(.*)/);
         if (m) {
@@ -362,7 +405,7 @@ function fillParam(filterParam)
 var onClickFilterList = (html) => {
     $("#process-log").text("处理中...");
     let torlist = $(html).find(THISCONFIG.eleTorList);
-    let imdbminval = parseFloat($("#minimdb").val()) || 0.0;
+    let imdbMinVal = parseFloat($("#minimdb").val()) || 0.0;
     let sizerange = getTorSizeRange($("#sizerange").val());
     saveParamToCookie();
     let filterCount = 0;
@@ -409,7 +452,8 @@ var onClickFilterList = (html) => {
         if (!tortime) { tortime = " "; }
 
         let imdbval = parseFloat(THISCONFIG.funcIMDb(element))  || 0.0;
-        if ( imdbminval > 0.1 && imdbval < imdbminval){
+        let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
+        if ( imdbMinVal > 0.1 && (imdbval < imdbMinVal) && (doubanval < imdbMinVal)){
             keepShow = false;
         }
         if ($("#titleregex").val()){
@@ -450,8 +494,11 @@ var onClickFilterList = (html) => {
     $("#process-log").text("过滤了：" + filterCount );
 };
 
-function onClickDownloadFiltered(html) {
+var asyncGetLink = async (html) => {
     $("#process-log").text('处理中...')
+    let passKeyStr = await THISCONFIG.funcGetPasskey();
+    console.log(passKeyStr);
+
     let torlist = $(html).find(THISCONFIG.eleTorList);
     var resulttext = '';
     for (let index = 1; index < torlist.length; ++index) {
@@ -459,12 +506,16 @@ function onClickDownloadFiltered(html) {
             let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink)
 
             if (hrefele) {
-                resulttext += hrefele.prop('href') + '\n'
+                resulttext += hrefele.prop('href') + passKeyStr + '\n'
             }
         }
     }
     GM_setClipboard(resulttext, 'text');
     $("#process-log").text('下载链接 已拷贝在剪贴板中');
+} 
+
+function onClickDownloadFiltered(html) {
+    asyncGetLink(html)
 }
 
 function addAdoptColumn(html) {
