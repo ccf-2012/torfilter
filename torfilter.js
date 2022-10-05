@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.5
+// @version      0.5.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，以及imdb大于输入值 的种子
 // @author       ccf2012
@@ -313,7 +313,7 @@ function saveToCookie(filterParam) {
     // change expire time here, 60 * 1000 for 1 minute
     // d.setTime(d.getTime() + ( 60 * 1000));
     // this is 3 days
-    d.setTime(d.getTime() + ( 3 * 24 * 60 * 60 * 1000));
+    d.setTime(d.getTime() + ( 300 * 24 * 60 * 60 * 1000));
     var expires = "expires=" + d.toUTCString();
     document.cookie = cookie_name + "=" + cookie_value + ";" + expires + ";path=/";
 }
