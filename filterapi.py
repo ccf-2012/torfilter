@@ -40,8 +40,12 @@ class configData():
     plexServer = ''
     plexToken = ''
     qbServer = ''
+    tmdb_api_key = ''
+    qbPort = ''
     qbUser = ''
     qbPass = ''
+    addPause = False
+    dryrun = False
 
 
 CONFIG = configData()
@@ -96,9 +100,10 @@ def checkDupAddTor():
         if (exists):
             return jsonify({'Dupe': True}), 202
         else:
-            if 'downloadlink' in request.json:
-                if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
-                    abort(400)
+            if not CONFIG.dryrun:
+                if 'downloadlink' in request.json:
+                    if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
+                        abort(400)
             return jsonify({'Download': True}), 201
     else:
         # if CONFIG.download_no_imdb:
@@ -254,14 +259,18 @@ def readConfig():
     except:
         CONFIG.tmdb_api_key = ''
 
+
     try:
         CONFIG.qbServer = config['QBIT']['server_ip']
         CONFIG.qbPort = config['QBIT']['port']
         CONFIG.qbUser = config['QBIT']['user']
         CONFIG.qbPass = config['QBIT']['pass']
         CONFIG.addPause = config.getboolean('QBIT', 'pause')
+        CONFIG.dryrun = config.getboolean('QBIT', 'dryrun')
     except:
         CONFIG.qbServer = ''
+        CONFIG.addPause = True
+        CONFIG.dryrun = True
         pass
 
 
