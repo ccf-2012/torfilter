@@ -15,6 +15,8 @@
 
 
 # torfilter
+![torfilterjs](https://ptpimg.me/d5l9yv.png)
+
 
 ## Greasy Fork 安装地址
 * https://greasyfork.org/zh-CN/scripts/451748
@@ -45,6 +47,9 @@
 
 
 # filterapi
+
+
+![filterapi](https://ptpimg.me/16cpc0.png)
 
 ## 前置准备
 1. python环境
