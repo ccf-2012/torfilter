@@ -14,7 +14,8 @@
 * 2022.9.25: 支持pter, chd, ade种子列表过滤: 过滤: 未作种， 无国语，有中字，标题不含，以及imdb大于输入值 的种子
 
 
-# torfilter
+-----
+# 种子列表过滤脚本 torfilter
 ![torfilterjs](https://ptpimg.me/d5l9yv.png)
 
 
@@ -45,8 +46,9 @@
 * Ob 的下载链接无passkey，~~无法直接用~~ 拼合usercp中的passkey构成下载链接
 * PTer 个人设置中可设置是否打开预览，打开会多一列，现已都支持 credit @Aruba
 
+-----
 
-# filterapi
+# 本地下载入库api服务 filterapi
 
 
 ![filterapi](https://ptpimg.me/16cpc0.png)
