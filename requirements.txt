@@ -1,0 +1,7 @@
+Flask-SQLAlchemy
+torcp
+plexapi
+flask_sqlalchemy
+flask
+qbittorrent-api
+tmdbv3api

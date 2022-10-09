@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.5.3
+// @version      0.6
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
-// @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
+// @connect      localhost
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://pterclub.com/torrents.php*
 // @match        https://pterclub.com/officialgroup*
@@ -51,30 +52,52 @@ const chd_imdb = (element) => {
 
 const chd_seeding = (element) => {
     var d = $(element).find("td:nth-child(10)");
-    return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
-    // return (d.text() === "100%")
+    // return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
+    return (d.text() === "100%")
 };
 
+const chd_passkey = async () => {
+    let html =  await $.get("usercp.php")
+    let passkeyRow = $(html).find('tr:contains("密钥"):last');
+    if (passkeyRow.length > 0){
+        var key = passkeyRow.find('td:last').text();
+        return "&passkey=" + key.trim();
+    }
+    return "" ;
+};
 //  ====== ade
-const ade_imdb = (element) => {
+const ade_imdbval = (element) => {
     var t = $(element).find("td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)");
     return t.text();
 };
+const ade_imdbid = (element) => {
+    var t = $(element).find("td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)").attr("href");
+    if (t) {var  m = t.match(/title\/(tt\d+)/)}
+    return (m) ? m[1] : ''
+};
+  
 const ade_douban = (element) => {
     var d = $(element).find("td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(1)");
     return d.text();
 };
 const ade_seeding = (element) => {
-    var d = $(element).find("div.torrents-progress");
+    var d = $(element).find("div.torrents-progress, div.torrents-progress2");
+    
     return (d.length > 0 && d.css("width") != '0px')
     // return d.text() === "100%";
 };
 
 //  ====== ob
-const ob_imdb = (element) => {
+const ob_imdbval = (element) => {
     var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(1) > em > label");
     return t.text();
 };
+const ob_imdbid = (element) => {
+    var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(1) > em > label").attr("data-imdbid");
+  
+    return (t) ? 'tt'+t : ''
+  };
+  
 const ob_douban = (element) => {
     var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(2) > em > label");
     return d.text();
@@ -84,12 +107,10 @@ const ob_seeding = (element) => {
     return ((d.length > 0) && (d.attr("title").startsWith('100')))
 };
 
-const getCpPage = async (url) => {
-    return await $.get(url);
-};
 
 const ob_passkey = async () => {
-    let html = await getCpPage("usercp.php");
+    let html =  await $.get("usercp.php")
+
     let passkeyRow = $(html).find('tr:contains("密钥"):last');
     if (passkeyRow.length <= 0) {
         passkeyRow = $(html).find('tr:contains("密匙"):last');
@@ -105,7 +126,7 @@ const ob_passkey = async () => {
 };
 
 //  ====== ssd
-const ssd_imdb = (element) => {
+const ssd_imdbval = (element) => {
     var t = $(element).find("td:nth-child(3) > div:nth-child(1) > a > span");
     let imdb = "";
     if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")){
@@ -113,6 +134,12 @@ const ssd_imdb = (element) => {
     }
     return imdb;
 };
+
+const ssd_imdbid = (element) => {
+    var t = $(element).find("td:nth-child(3) > div:nth-child(1) > a").attr("href");
+    if (t) {var  m = t.match(/title\/(tt\d+)/)}
+    return (m) ? m[1] : ''
+  };
 
 const ssd_douban = (element) => {
     var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
@@ -132,7 +159,7 @@ const ssd_seeding = (element) => {
 };
 
 const ssd_passkey = async () => {
-    let html = await getCpPage("usercp.php");
+    let html =  await $.get("usercp.php")
     let passkeyRow = $(html).find('tr:contains("密钥"):last');
     if (passkeyRow.length > 0){
         var key = passkeyRow.find('td:last').text();
@@ -140,6 +167,7 @@ const ssd_passkey = async () => {
     }
     return "" ;
 }
+
 
 var config = [
     {
@@ -163,6 +191,7 @@ var config = [
         filterGY: true,
         filterZZ: true,
         funcIMDb:pter_imdb,
+        funcIMDbId:not_supported,
         funcDouban:pter_douban,
         funcSeeding: pter_seeding,    
         funcGetPasskey: skip_passkey,  
@@ -186,9 +215,10 @@ var config = [
         filterGY: true,
         filterZZ: true,
         funcIMDb:chd_imdb,
+        funcIMDbId:not_supported,
         funcDouban:not_supported,
         funcSeeding: chd_seeding,    
-        funcGetPasskey: skip_passkey,  
+        funcGetPasskey: chd_passkey,  
       },
       {
         host: "audiences.me",
@@ -209,7 +239,8 @@ var config = [
         eleCatImg: "td:nth-child(1) > a > img",
         filterGY: true,
         filterZZ: true,
-        funcIMDb:ade_imdb,
+        funcIMDb:ade_imdbval,
+        funcIMDbId:ade_imdbid,
         funcDouban:ade_douban,
         funcSeeding: ade_seeding,    
         funcGetPasskey: skip_passkey,  
@@ -232,7 +263,8 @@ var config = [
         eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
         filterGY: true,
         filterZZ: true,
-        funcIMDb:ob_imdb,
+        funcIMDb:ob_imdbval,
+        funcIMDbId:ob_imdbid,
         funcDouban:ob_douban,
         funcSeeding: ob_seeding,
         funcGetPasskey: ob_passkey,  
@@ -255,7 +287,8 @@ var config = [
         eleCatImg: "td:nth-child(1) > a > img",
         filterGY: false,
         filterZZ: false,
-        funcIMDb:ssd_imdb,
+        funcIMDb:ssd_imdbval,
+        funcIMDbId:ssd_imdbid,
         funcDouban:ssd_douban,
         funcSeeding: ssd_seeding,
         funcGetPasskey: ssd_passkey,  
@@ -270,13 +303,13 @@ function addFilterPanel() {
 
     var donwnloadPanel = `
     <table align='center'> <tr>
-    <td style='width: 70px; border: none;'>
+    <td style='width: 65px; border: none;'>
     <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
     </td>
-    <td style='width: 70px; border: none;'>
+    <td style='width: 65px; border: none;'>
     <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
     </td>
-    <td style='width: 70px; border: none;'>
+    <td style='width: 65px; border: none;'>
     <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
     </td>
     <td style='width: 170px; border: none;'>
@@ -293,22 +326,26 @@ function addFilterPanel() {
     </div>
     </td>    
 
-    <td style='width: 140px; border: none;'>
+    <td style='width: 130px; border: none;'>
     <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
     </div>
     </td>    
-    <td style='width: 70px; border: none;'>
-        <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;padding: 5px 10px;">
+    <td style='width: 60px; border: none;'>
+        <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
         过滤
         </button>
-        </td>
-    <td style='width: 100px; border: none;'>
-        <button type="button" id="btn-downloadfiltered" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;padding: 5px 10px;">
+    </td>
+    <td style='width: 80px; border: none;'>
+        <button type="button" id="btn-copydllink" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
         拷贝链接
         </button>
-
     </td>
-    <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;padding: 5px 10px;"></div> </td>
+    <td style='width: 80px; border: none;'>
+        <button type="button" id="btn-apidownload" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+        查重下载
+        </button>
+    </td>
+    <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
     </tr>
     </table>
 `
@@ -342,7 +379,7 @@ function sizeStrToGB(sizeStr) {
 }
 
 function getTorSizeRange(rangestr) {
-    let m = rangestr.match(/(\d+)([,，]\s*(\d+))?/);
+    let m = rangestr.match(/(\d+)([,，-]\s*(\d+))?/);
     if (m) {
         return [parseInt(m[1]) || 0, parseInt(m[3]) || 0]
     }
@@ -402,6 +439,24 @@ function fillParam(filterParam)
     }
 }
 
+function getItemTitle(item){
+    let titlestr = '';
+
+    if (THISCONFIG.useTitleName == 1) {
+        titlestr = item.attr("title");
+    } else if (THISCONFIG.useTitleName == 0) {
+        titlestr = item.text();
+    } else if (THISCONFIG.useTitleName == 2) {
+        var elebr = item.parent().children('br').get(0)
+        if (elebr){
+          var eletitle = elebr.nextSibling; 
+          if (eletitle.data) titlestr = eletitle.data
+          else if (eletitle.firstChild.data) titlestr = eletitle.firstChild.data
+        }
+    } 
+    return titlestr
+}
+
 var onClickFilterList = (html) => {
     $("#process-log").text("处理中...");
     let torlist = $(html).find(THISCONFIG.eleTorList);
@@ -412,23 +467,11 @@ var onClickFilterList = (html) => {
     for (let index = 1; index < torlist.length; ++index) {
         let element = torlist[index];
         let item = $(element).find(THISCONFIG.eleTorItem);
-        let titlestr = '';
-
         if (item.length <= 0 ) {
             continue;
         }
-        if (THISCONFIG.useTitleName === 1) {
-            titlestr = item.attr("title");
-        } else if (THISCONFIG.useTitleName === 0) {
-            titlestr = item.text();
-        } else if (THISCONFIG.useTitleName === 2) {
-            var elebr = item.parent().children('br').get(0)
-            if (elebr){
-              var eletitle = elebr.nextSibling; 
-              if (eletitle.data) titlestr = eletitle.data
-              else if (eletitle.firstChild.data) titlestr = eletitle.firstChild.data
-            }
-        } 
+    
+        let titlestr = getItemTitle(item);
         let keepShow = true;
 
         if (sizerange[0] || sizerange[1]) {
@@ -494,18 +537,17 @@ var onClickFilterList = (html) => {
     $("#process-log").text("过滤了：" + filterCount );
 };
 
-var asyncGetLink = async (html) => {
+var asyncCopyLink = async (html) => {
     $("#process-log").text('处理中...')
     let passKeyStr = await THISCONFIG.funcGetPasskey();
-    console.log(passKeyStr);
+    // console.log(passKeyStr);
 
     let torlist = $(html).find(THISCONFIG.eleTorList);
     var resulttext = '';
     for (let index = 1; index < torlist.length; ++index) {
         if ($(torlist[index]).is(":visible")) {
             let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink)
-
-            if (hrefele) {
+            if (hrefele.length > 0) {
                 resulttext += hrefele.prop('href') + passKeyStr + '\n'
             }
         }
@@ -514,8 +556,74 @@ var asyncGetLink = async (html) => {
     $("#process-log").text('下载链接 已拷贝在剪贴板中');
 } 
 
-function onClickDownloadFiltered(html) {
-    asyncGetLink(html)
+function onClickCopyDownloadLink(html) {
+    asyncCopyLink(html)
+}
+
+var postToFilterDownloadApi = async (tordata, ele) => {
+    var resp = GM.xmlHttpRequest({
+        method: "POST",
+        url: "http://localhost:3006/p/api/v1.0/checkdupe",
+        data: JSON.stringify(tordata),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onload: function (response) {
+            if (response.status == 202){
+                $(ele).css("background-color","lightgray");
+                console.log('Dupe: ' + tordata.torname);
+            }
+            else if (response.status == 201) {
+                $(ele).css("background-color","darkseagreen");
+                console.log('Add download: ' + tordata.torname);
+            }
+            else if (response.status == 203) {
+                $(ele).css("background-color","lightpink");
+                console.log('TMDbNotFound: ' + tordata.torname);
+            }
+            else {
+                $(ele).css("background-color","red");
+                console.log('Error: ' + response);
+            }
+        },
+        onerror: function (reponse) {
+          //alert('error');
+          console.log("error: ", reponse);
+        },
+    });
+}
+
+
+var asyncApiDownload = async (html) => {
+    $("#process-log").text('处理中...')
+    let passKeyStr = await THISCONFIG.funcGetPasskey();
+
+    let torlist = $(html).find(THISCONFIG.eleTorList);
+    for (let index = 1; index < torlist.length; ++index) {
+        if ($(torlist[index]).is(":visible")) {
+            let element = torlist[index];
+            let item = $(element).find(THISCONFIG.eleTorItem);
+            let titlestr = getItemTitle(item);
+            let imdbid = THISCONFIG.funcIMDbId(element);
+            let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
+
+            if (hrefele.length > 0) {
+                let dllink = hrefele.prop('href') + passKeyStr;
+                var tordata = {
+                    torname : titlestr,
+                    imdbid: imdbid,
+                    downloadlink: dllink,
+                };
+                // console.log(tordata);
+                await postToFilterDownloadApi(tordata, element);
+            }
+        }
+    }
+    $("#process-log").text('查重下载已提交');
+}
+
+function onClickApiDownload(html) {
+    asyncApiDownload(html)
 }
 
 function addAdoptColumn(html) {
@@ -553,10 +661,11 @@ function addAdoptColumn(html) {
         $("#btn-filterlist").click(function () {
             onClickFilterList(document);
         });
-        $("#btn-downloadfiltered").click(function () {
-            onClickDownloadFiltered(document);
+        $("#btn-copydllink").click(function () {
+            onClickCopyDownloadLink(document);
         });
-
+        $("#btn-apidownload").click(function () {
+            onClickApiDownload(document);
+        });
     }
-
 })();
