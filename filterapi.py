@@ -87,6 +87,14 @@ def checkDupAddTor():
     if not request.json or 'torname' not in request.json:
         abort(400)
 
+    if (not CONFIG.qbServer):
+        print("qBittorrent not set, skip")
+        abort(400)
+
+    if (not CONFIG.tmdb_api_key):
+        print("tmdb_api_key not set, skip")
+        abort(400)
+
     p = TMDbNameParser(CONFIG.tmdb_api_key, '')
 
     imdbstr = ''
@@ -100,10 +108,15 @@ def checkDupAddTor():
         if (exists):
             return jsonify({'Dupe': True}), 202
         else:
+            # print("Download: " + request.json['torname'] + "  "+request.json['downloadlink'])
             if not CONFIG.dryrun:
                 if 'downloadlink' in request.json:
+                    print("Added: " + request.json['torname'])
                     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
                         abort(400)
+            else:
+                print("DRYRUN: " + request.json['torname'])
+                
             return jsonify({'Download': True}), 201
     else:
         # if CONFIG.download_no_imdb:
@@ -181,6 +194,7 @@ def addQbitWithTag(downlink, imdbtag):
 
     return True
 
+
 def tryFloat(fstr):
     try:
         f = float(fstr)
@@ -196,6 +210,9 @@ def isMediaExt(path):
 
 # @app.route('/sitetor/api/v1.0/init', methods=['GET'])
 def loadPlexLibrary():
+    if not (CONFIG.plexServer and CONFIG.plexToken):
+        print("Set the 'server_token' and 'server_url' in config.ini")
+        return
     print("Create Database....")
     with app.app_context():
         db.create_all()
@@ -265,13 +282,11 @@ def readConfig():
         CONFIG.qbPort = config['QBIT']['port']
         CONFIG.qbUser = config['QBIT']['user']
         CONFIG.qbPass = config['QBIT']['pass']
-        CONFIG.addPause = config.getboolean('QBIT', 'pause')
-        CONFIG.dryrun = config.getboolean('QBIT', 'dryrun')
     except:
         CONFIG.qbServer = ''
-        CONFIG.addPause = True
-        CONFIG.dryrun = True
-        pass
+
+    CONFIG.addPause = config['QBIT'].getboolean('pause', False)
+    CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
 
 def searchTMDb(TmdbParser, title, imdb):

@@ -87,6 +87,20 @@ const ade_seeding = (element) => {
     // return d.text() === "100%";
 };
 
+// const ade_passkey = async () => {
+//     let html =  await $.get("usercp.php")
+//     // debugger;
+//     // $(html).find("#passkey").css("display", "");
+//     let passkeyRow = $(html).find("#passkey");
+//     if (passkeyRow.length > 0){
+//         let key = passkeyRow.text().replace('（妥善保管，请勿泄露）', '');
+//         return "&passkey=" + key.trim() + "&https=1" ;    
+//     }
+//     return "" ;
+// };
+
+
+
 //  ====== ob
 const ob_imdbval = (element) => {
     var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(4) > div:nth-child(1) > em > label");
