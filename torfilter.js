@@ -591,6 +591,10 @@ var postToFilterDownloadApi = async (tordata, ele) => {
                 $(ele).css("background-color","darkseagreen");
                 console.log('Add download: ' + tordata.torname);
             }
+            else if (response.status == 205) {
+                $(ele).css("background-color","darkturquoise");
+                console.log('no dupe but no download: ' + tordata.torname);
+            }
             else if (response.status == 203) {
                 $(ele).css("background-color","lightpink");
                 console.log('TMDbNotFound: ' + tordata.torname);
@@ -607,6 +611,9 @@ var postToFilterDownloadApi = async (tordata, ele) => {
     });
 }
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 var asyncApiDownload = async (html) => {
     $("#process-log").text('处理中...')
@@ -630,6 +637,7 @@ var asyncApiDownload = async (html) => {
                 };
                 // console.log(tordata);
                 await postToFilterDownloadApi(tordata, element);
+                await sleep(2000);
             }
         }
     }

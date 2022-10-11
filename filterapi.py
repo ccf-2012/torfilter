@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import re
 import os
+from sqlalchemy import Interval
 from torcp.tmdbparser import TMDbNameParser
 from plexapi.server import PlexServer
 import configparser
@@ -37,6 +38,7 @@ db = SQLAlchemy(app)
 
 
 class configData():
+    interval = 3
     plexServer = ''
     plexToken = ''
     qbServer = ''
@@ -80,6 +82,10 @@ class MediaItem(db.Model):
     def __repr__(self):
         return '<PlexItem %r>' % self.title
 
+def validDownloadlink(downlink):
+    keystr = ['passkey', 'downhash']
+    return  any(x in downlink for x in keystr)
+
 
 @app.route('/p/api/v1.0/checkdupe', methods=['POST'])
 # @auth.login_required
@@ -111,6 +117,10 @@ def checkDupAddTor():
             # print("Download: " + request.json['torname'] + "  "+request.json['downloadlink'])
             if not CONFIG.dryrun:
                 if 'downloadlink' in request.json:
+                    if  not validDownloadlink(request.json['downloadlink']):
+                        print("Not valid torrent downlink: " + request.json['torname'])
+                        return jsonify({'no dupe but not download': True}), 205
+
                     print("Added: " + request.json['torname'])
                     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
                         abort(400)
@@ -262,28 +272,20 @@ def loadPlexLibrary():
 def readConfig():
     config = configparser.ConfigParser()
     config.read('config.ini')
-    try:
-        # 'http://{}:{}'.format(ip, port)
-        CONFIG.plexServer = config['PLEX']['server_url']
-        # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
-        CONFIG.plexToken = config['PLEX']['server_token']
-    except:
-        CONFIG.plexServer = ''
-        CONFIG.plexToken = ''
 
-    try:
-        CONFIG.tmdb_api_key = config['TMDB']['api_key']
-    except:
-        CONFIG.tmdb_api_key = ''
+    # CONFIG.interval = config['PLEX'].getint('interval', 3)
+    # 'http://{}:{}'.format(ip, port)
+    CONFIG.plexServer = config['PLEX'].get('server_url', '')
+    # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+    CONFIG.plexToken = config['PLEX'].get('server_token', '')
+
+    CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
 
 
-    try:
-        CONFIG.qbServer = config['QBIT']['server_ip']
-        CONFIG.qbPort = config['QBIT']['port']
-        CONFIG.qbUser = config['QBIT']['user']
-        CONFIG.qbPass = config['QBIT']['pass']
-    except:
-        CONFIG.qbServer = ''
+    CONFIG.qbServer = config['QBIT'].get('server_ip', '')
+    CONFIG.qbPort = config['QBIT'].get('port', '')
+    CONFIG.qbUser = config['QBIT'].get('user', '')
+    CONFIG.qbPass = config['QBIT'].get('pass')
 
     CONFIG.addPause = config['QBIT'].getboolean('pause', False)
     CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
