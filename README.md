@@ -4,7 +4,7 @@
 
 
 ## Last update:
-* 2022.10.12: 支持Emby，支持pt站上detail页
+* 2022.10.12: 支持Emby，支持pt站上detail页上查重和下载
 * 2022.10.9: 本地下载入库api, 改名 `dupapi.py`
 * 2022.10.9: 将种子信息提交 **dupapi** 进行下载入库
 * 2022.10.5: ob, ssd 在拷贝下载链接时，从控制面板中取passkey拼合形成下载链接
@@ -51,7 +51,6 @@
 
 # 本地下载入库api服务 dupapi
 
-
 ![dupapi](https://ptpimg.me/16cpc0.png)
 
 ## 前置准备
@@ -73,6 +72,11 @@ server_url=http://192.168.5.6:32400
 ; 取得Plex token的步骤： https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
 server_token=E3-my-plex-token-CbVsY
 
+; [EMBY]
+; server_url=http://192.168.5.6:8096
+; user=embyuser
+; pass=embypass
+
 [TMDB]
 ; 取得TMDb api key步骤: https://kb.synology.cn/zh-cn/DSM/tutorial/How_to_apply_for_a_personal_API_key_to_get_video_info
 api_key=9e07s1bthetmdbapikey3c2674b093
@@ -83,16 +87,18 @@ server_ip=192.168.5.199
 port=8091
 user=MyQbitUsername
 pass=MyQbitPassword
+
 ```
 
-## 建立本地plex条目数据库
-> 现场从plex服务器中查询条目费时费力，所以这里是在本地建立 **sqlite** 数据库
+## 建立本地Emby/plex条目数据库
+> 每一次查重都现场从plex服务器中查询条目代价过大，所以这里是在本地建立 **sqlite** 数据库
 
-* 运行初始化数据库命令，从自己的Plex服务器中获取所有条目，存储在本地 **sqlite** 数据库中，其间如果没有TMDb数据，将会现查并补全。
+* 运行初始化数据库命令，从自己的Plex/Emby服务器中获取所有条目，存储在本地 **sqlite** 数据库中，其间如果发现条目没有TMDb数据，将会现查并补全。
 ```sh
 python dupapi.py --init-library
 ```
 * 初始化命令运行后将会退出
+* sqlite 数据库存在当前目录下的 `instance` 目录中，如果想要重新初始化，可直接 `rm -rf instance` 删除再重建
 
 ## 启动 dupapi 服务
 * 当前内置的监听端口为 `3006`，这个端口号是与 `torfilter.js` 中对应的。若要修改，则两边代码中对应查找修改。

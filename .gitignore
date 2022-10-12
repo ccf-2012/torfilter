@@ -72,6 +72,7 @@ db.sqlite*
 
 # Flask stuff:
 instance/
+instance*/
 .webassets-cache
 
 # Scrapy stuff:

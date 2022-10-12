@@ -82,9 +82,10 @@ class MediaItem(db.Model):
     def __repr__(self):
         return '<PlexItem %r>' % self.title
 
+
 def validDownloadlink(downlink):
     keystr = ['passkey', 'downhash']
-    return  any(x in downlink for x in keystr)
+    return any(x in downlink for x in keystr)
 
 
 @app.route('/p/api/v1.0/dupedownload', methods=['POST'])
@@ -110,7 +111,8 @@ def checkDupAddTor():
 
     if torTMDb > 0:
         # q = db.session.query(PlexItem).filter_by(tmdb=torTMDb).first()
-        exists = db.session.query(db.exists().where(MediaItem.tmdb == torTMDb)).scalar()
+        exists = db.session.query(db.exists().where(
+            MediaItem.tmdb == torTMDb)).scalar()
         if (exists):
             return jsonify({'Dupe': True}), 202
         else:
@@ -118,7 +120,8 @@ def checkDupAddTor():
             if not CONFIG.dryrun:
                 if 'downloadlink' in request.json:
                     if not validDownloadlink(request.json['downloadlink']):
-                        print("Not valid torrent downlink: " + request.json['torname'])
+                        print("Not valid torrent downlink: " +
+                              request.json['torname'])
                         return jsonify({'no dupe but not download': True}), 205
 
                     print("Added: " + request.json['torname'])
@@ -126,12 +129,12 @@ def checkDupAddTor():
                         abort(400)
             else:
                 print("DRYRUN: " + request.json['torname'])
-                
+
             return jsonify({'Download': True}), 201
     else:
         # if CONFIG.download_no_imdb:
-            #     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
-            #         abort(400)
+        #     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
+        #         abort(400)
         return jsonify({'TMDbNotFound': True}), 203
 
 
@@ -159,15 +162,16 @@ def detailCheckDupe():
 
     if torTMDb > 0:
         # q = db.session.query(PlexItem).filter_by(tmdb=torTMDb).first()
-        exists = db.session.query(db.exists().where(MediaItem.tmdb == torTMDb)).scalar()
+        exists = db.session.query(db.exists().where(
+            MediaItem.tmdb == torTMDb)).scalar()
         if (exists):
             return jsonify({'Dupe': True}), 202
-        else:                
+        else:
             return jsonify({'No Dupe': True}), 201
     else:
         # if CONFIG.download_no_imdb:
-            #     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
-            #         abort(400)
+        #     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
+        #         abort(400)
         return jsonify({'TMDbNotFound': True}), 203
 
 
@@ -207,9 +211,9 @@ def test_tasks():
     return jsonify(thetime)
 
 
-
 def addQbitWithTag(downlink, imdbtag):
-    qbClient = qbittorrentapi.Client(host=CONFIG.qbServer, port=CONFIG.qbPort, username=CONFIG.qbUser , password=CONFIG.qbPass)
+    qbClient = qbittorrentapi.Client(
+        host=CONFIG.qbServer, port=CONFIG.qbPort, username=CONFIG.qbUser, password=CONFIG.qbPass)
 
     try:
         qbClient.auth_log_in()
@@ -253,13 +257,14 @@ def isMediaExt(path):
     fn, ext = os.path.splitext(path)
     return ext in ['.mkv', '.mp4', '.ts', '.m2ts']
 
+
 def loadEmbyLibrary():
     if not (CONFIG.embyServer and CONFIG.embyUser):
         print("Set the EMBY section in config.ini")
         return
     print("Create Database....")
-    # with app.app_context():
-    #     db.create_all()
+    with app.app_context():
+        db.create_all()
 
     print("Connect to the Emby server: " + CONFIG.embyServer)
     ec = EmbyClient(CONFIG.embyServer, CONFIG.embyUser, CONFIG.embyPass)
@@ -282,9 +287,9 @@ def loadEmbyLibrary():
         if 'Tmdb' not in guids:
             print("No TMDb: " + item["Name"] + pd)
             pi.tmdb = searchTMDb(p, item["Name"], pi.imdb)
-        # with app.app_context():
-        #     db.session.add(pi)
-        #     db.session.commit()
+        with app.app_context():
+            db.session.add(pi)
+            db.session.commit()
 
 
 # @app.route('/sitetor/api/v1.0/init', methods=['GET'])
@@ -344,23 +349,27 @@ def readConfig():
 
     # CONFIG.interval = config['PLEX'].getint('interval', 3)
     # 'http://{}:{}'.format(ip, port)
-    CONFIG.plexServer = config['PLEX'].get('server_url', '')
-    # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
-    CONFIG.plexToken = config['PLEX'].get('server_token', '')
+    if 'PLEX' in config:
+        CONFIG.plexServer = config['PLEX'].get('server_url', '')
+        # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+        CONFIG.plexToken = config['PLEX'].get('server_token', '')
 
-    CONFIG.embyServer = config['EMBY'].get('server_url', '')
-    CONFIG.embyUser = config['EMBY'].get('user', '')
-    CONFIG.embyPass = config['EMBY'].get('pass', '')
+    if 'EMBY' in config:
+        CONFIG.embyServer = config['EMBY'].get('server_url', '')
+        CONFIG.embyUser = config['EMBY'].get('user', '')
+        CONFIG.embyPass = config['EMBY'].get('pass', '')
 
-    CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
+    if 'TMDB' in config:
+        CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
 
-    CONFIG.qbServer = config['QBIT'].get('server_ip', '')
-    CONFIG.qbPort = config['QBIT'].get('port', '')
-    CONFIG.qbUser = config['QBIT'].get('user', '')
-    CONFIG.qbPass = config['QBIT'].get('pass')
+    if 'QBIT' in config:
+        CONFIG.qbServer = config['QBIT'].get('server_ip', '')
+        CONFIG.qbPort = config['QBIT'].get('port', '')
+        CONFIG.qbUser = config['QBIT'].get('user', '')
+        CONFIG.qbPass = config['QBIT'].get('pass')
 
-    CONFIG.addPause = config['QBIT'].getboolean('pause', False)
-    CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
+        CONFIG.addPause = config['QBIT'].getboolean('pause', False)
+        CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
 
 def searchTMDb(TmdbParser, title, imdb):
