@@ -13,10 +13,15 @@
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://pterclub.com/torrents.php*
 // @match        https://pterclub.com/officialgroup*
+// @match        https://pterclub.com/details.php*
 // @match        https://chdbits.co/torrents.php*
+// @match        https://chdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
+// @match        https://audiences.me/details.php*
 // @match        https://ourbits.club/torrents.php*
+// @match        https://ourbits.club/details.php*
 // @match        https://springsunday.net/torrents.php*
+// @match        https://springsunday.net/details.php*
 
 // ==/UserScript==
 
@@ -182,6 +187,14 @@ const ssd_passkey = async () => {
     return "" ;
 }
 
+const ssd_detailTable = (html) => {
+    let downTr = $(html).find('tr:contains("下载"):first');
+    if (downTr){
+        return downTr.parent()
+    }
+    else return null
+}
+
 
 var config = [
     {
@@ -258,6 +271,7 @@ var config = [
         funcDouban:ade_douban,
         funcSeeding: ade_seeding,    
         funcGetPasskey: skip_passkey,  
+        eleTorDetailTable: "tr:contains('副标题'):last", 
       },
       {
         host: "ourbits.club",
@@ -314,6 +328,9 @@ var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
 
 function addFilterPanel() {
     var torTable = $(THISCONFIG.eleTorTable);
+    if (torTable.length <= 0){
+        return
+    }
 
     var donwnloadPanel = `
     <table align='center'> <tr>
@@ -369,6 +386,31 @@ function addFilterPanel() {
     if (!THISCONFIG.filterZZ) { $('#nochnlang').parent().hide() }
 }
 
+function addDetailPagePanel(html) {
+    // let downTr = $(html).find(THISCONFIG.eleTorDetailTable);
+    let downTr = $(html).find("tr:contains('副标题'):last");
+    let torDetailTable = (downTr.length > 0) ? downTr.parent().parent() : null
+    if (!torDetailTable.length ){
+        return
+    }
+    var detailPanel = `
+    <table align='center'> <tr>
+    <td style='width: 80px; border: none;'>
+        <button type="button" id="btn-detail-checkdupe" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+        查重
+        </button>
+    </td>
+    <td style='width: 80px; border: none;'>
+        <button type="button" id="btn-detail-apidownload" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+        下载
+        </button>
+    </td>
+    <td style='width: 120px; border: none;'> <div id="detail-log" style="margin-left: 5px;"></div> </td>
+    </tr>
+    </table>    `
+    torDetailTable.before(detailPanel);
+
+}
   
 function sizeStrToGB(sizeStr) {
     var regex = /[+-]?\d+(\.\d+)?/g;
@@ -577,7 +619,7 @@ function onClickCopyDownloadLink(html) {
 var postToFilterDownloadApi = async (tordata, ele) => {
     var resp = GM.xmlHttpRequest({
         method: "POST",
-        url: "http://localhost:3006/p/api/v1.0/checkdupe",
+        url: "http://localhost:3006/p/api/v1.0/dupedownload",
         data: JSON.stringify(tordata),
         headers: {
           "Content-Type": "application/json",
@@ -615,6 +657,89 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function _getDownloadUrlByPossibleHrefs() {
+    const possibleHrefs = [
+      // pthome
+      "a[href*='downhash'][href*='https']",
+      // hdchina
+      "a[href*='hash'][href*='https']",
+      // misc
+      "a[href*='passkey'][href*='https']",
+      "a[href*='passkey']"
+    ];
+
+    for (const href of possibleHrefs) {
+      const query = $(href);
+      if (query.length) {
+        return query.attr("href");
+      }
+    }
+    return null;
+}
+
+function getIMDb() {
+    let bodytext = $("body").text();
+    let datas = /IMDb(链接)\s*(\<.[!>]*\>)?.*https:\/\/www\.imdb\.com\/title\/(tt\d+)/.exec(bodytext);
+    if (datas && datas.length > 1) {
+      return datas[3];
+    }
+    return '';
+}
+
+var postToDetailCheckDupeApi = async (apiurl, tordata) => {
+    let logele = "#detail-log";
+    var resp = GM.xmlHttpRequest({
+        method: "POST",
+        url: apiurl,
+        data: JSON.stringify(tordata),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onload: function (response) {
+            if (response.status == 202){
+                $(logele).parent().parent().css("background-color","lightgray");
+                $(logele).text('重复.')
+            }
+            else if (response.status == 201) {
+                $(logele).parent().parent().css("background-color","darkseagreen");
+                $(logele).text('无重复.')
+            }
+            else if (response.status == 205) {
+                $(logele).parent().parent().css("background-color","darkturquoise");
+                $(logele).text('无下载链接.')
+            }
+            else if (response.status == 203) {
+                $(logele).parent().parent().css("background-color","lightpink");
+                $(logele).text('TMDbNotFound.')
+            }
+            else {
+                $(logele).text('出错.')
+            }
+        },
+        onerror: function (reponse) {
+          //alert('error');
+          console.log("error: ", reponse);
+        },
+    });
+}
+
+var asyncDetailApiDownload = async (html) => {
+    $("#detail-log").text('处理中...')
+    // dllink = $("#torrent_dl_url > a").href()
+    let titlestr = $("#top").text()
+    let dllink = _getDownloadUrlByPossibleHrefs();
+    if (dllink){
+        let imdbid = getIMDb();
+        var tordata = {
+            torname : titlestr,
+            imdbid: imdbid,
+            downloadlink: dllink,
+        };
+        // console.log(tordata);
+        await postToDetailCheckDupeApi("http://localhost:3006/p/api/v1.0/dupedownload", tordata);
+    }
+}
+
 var asyncApiDownload = async (html) => {
     $("#process-log").text('处理中...')
     let passKeyStr = await THISCONFIG.funcGetPasskey();
@@ -648,6 +773,31 @@ function onClickApiDownload(html) {
     asyncApiDownload(html)
 }
 
+function onClickDetailDownload(html) {
+    asyncDetailApiDownload(html)
+}
+
+var asyncDetailCheckDupe = async (html) => {
+    $("#detail-log").text('处理中...')
+    // dllink = $("#torrent_dl_url > a").href()
+    let titlestr = $("#top").text()
+    let dllink = _getDownloadUrlByPossibleHrefs();
+    if (dllink){
+        let imdbid = getIMDb();
+        var tordata = {
+            torname : titlestr,
+            imdbid: imdbid,
+            downloadlink: dllink,
+        };
+        // console.log(tordata);
+        await postToDetailCheckDupeApi("http://localhost:3006/p/api/v1.0/checkdupeonly", tordata);
+    }
+}
+
+function onClickDetailCheckDup(html) {
+    asyncDetailCheckDupe(html)
+}
+
 function addAdoptColumn(html) {
     // const torTable = $(THISCONFIG.eleTorTable);
     if (THISCONFIG.host != "pterclub.com"){
@@ -677,17 +827,28 @@ function addAdoptColumn(html) {
 (function () {
     "use strict";
     if (THISCONFIG) {
-        addAdoptColumn(document);
-        addFilterPanel();
-        loadParamFromCookie();
-        $("#btn-filterlist").click(function () {
-            onClickFilterList(document);
-        });
-        $("#btn-copydllink").click(function () {
-            onClickCopyDownloadLink(document);
-        });
-        $("#btn-apidownload").click(function () {
-            onClickApiDownload(document);
-        });
+        if (window.location.href.match(/details.php/)) {
+            addDetailPagePanel(document)
+            $("#btn-detail-checkdupe").click(function () {
+                onClickDetailCheckDup(document);
+            });
+            $("#btn-detail-apidownload").click(function () {
+                onClickDetailDownload(document);
+            });
+        }
+        else {
+            addAdoptColumn(document);
+            addFilterPanel();
+            loadParamFromCookie();
+            $("#btn-filterlist").click(function () {
+                onClickFilterList(document);
+            });
+            $("#btn-copydllink").click(function () {
+                onClickCopyDownloadLink(document);
+            });
+            $("#btn-apidownload").click(function () {
+                onClickApiDownload(document);
+            });    
+        }
     }
 })();

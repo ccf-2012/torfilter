@@ -4,8 +4,9 @@
 
 
 ## Last update:
-* 2022.10.9: `filterapi.py` 本地下载入库api
-* 2022.10.9: 将种子信息提交 **filterapi** 进行下载入库
+* 2022.10.12: 支持Emby，支持pt站上detail页
+* 2022.10.9: 本地下载入库api, 改名 `dupapi.py`
+* 2022.10.9: 将种子信息提交 **dupapi** 进行下载入库
 * 2022.10.5: ob, ssd 在拷贝下载链接时，从控制面板中取passkey拼合形成下载链接
 * 2022.10.5: IMDb 或 豆瓣 大于输入值
 * 2022.10.4: 加入大小介于过滤，单位GB，使用`,`分隔；
@@ -28,7 +29,7 @@
     * 当前支持pter, chd, ade, ob, ssd
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
-3. since 2022.10.9，配合 filterapi.py 实现查重下载入库，请查看 https://github.com/ccf-2012/torfilter
+3. since 2022.10.9，配合 dupapi.py 实现查重下载入库，请查看 https://github.com/ccf-2012/torfilter
 
 * 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
 * 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
@@ -48,10 +49,10 @@
 
 -----
 
-# 本地下载入库api服务 filterapi
+# 本地下载入库api服务 dupapi
 
 
-![filterapi](https://ptpimg.me/16cpc0.png)
+![dupapi](https://ptpimg.me/16cpc0.png)
 
 ## 前置准备
 1. python环境
@@ -89,24 +90,24 @@ pass=MyQbitPassword
 
 * 运行初始化数据库命令，从自己的Plex服务器中获取所有条目，存储在本地 **sqlite** 数据库中，其间如果没有TMDb数据，将会现查并补全。
 ```sh
-python filterapi.py --init-library
+python dupapi.py --init-library
 ```
 * 初始化命令运行后将会退出
 
-## 启动 filterapi 服务
+## 启动 dupapi 服务
 * 当前内置的监听端口为 `3006`，这个端口号是与 `torfilter.js` 中对应的。若要修改，则两边代码中对应查找修改。
-* 当前过滤脚本 `torfilter.js` 会连接 `localhost` 中的 `filterapi`服务，如果部署在不同机器上，则在 `torfilter.js` 中查找修改。
-* 启动 filterapi 服务：
+* 当前过滤脚本 `torfilter.js` 会连接 `localhost` 中的 `dupapi`服务，如果部署在不同机器上，则在 `torfilter.js` 中查找修改。
+* 启动 dupapi 服务：
 ```sh 
-python filterapi.py
+python dupapi.py
 ```
 
 * 过滤脚本 `torfilter.js` 会发送的api请求相当于：
 ```sh
-curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen Ground 2013 1080p BluRay x265 10bit DTS-ADE", "imdb": "tt2005374", "downloadlink": "https://audiences.me/download.php?id=71406&...."}' http://localhost:3000/p/api/v1.0/checkdupe
+curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen Ground 2013 1080p BluRay x265 10bit DTS-ADE", "imdb": "tt2005374", "downloadlink": "https://audiences.me/download.php?id=71406&...."}' http://localhost:3000/p/api/v1.0/dupedownload
 ```
 
-* filterapi 服务设计为本地临时启用用途，暂无密码防护
+* dupapi 服务设计为本地临时启用用途，暂无密码防护
 
 
 
