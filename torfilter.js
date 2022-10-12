@@ -732,7 +732,7 @@ function _getDownloadUrlByPossibleHrefs() {
   for (const href of possibleHrefs) {
     const query = $(href);
     if (query.length) {
-      return query.attr("href");
+      return query.prop("href");
     }
   }
   return null;
