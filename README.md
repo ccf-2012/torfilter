@@ -5,8 +5,7 @@
 
 ## Last update:
 * 2022.10.12: 支持Emby，支持pt站上detail页上查重和下载
-* 2022.10.9: 本地下载入库api, 改名 `dupapi.py`
-* 2022.10.9: 将种子信息提交 **dupapi** 进行下载入库
+* 2022.10.9: 新增本地查重下载服务 **dupapi** ，网页将种子信息提交进行查重，符合条件的推送下载器
 * 2022.10.5: ob, ssd 在拷贝下载链接时，从控制面板中取passkey拼合形成下载链接
 * 2022.10.5: IMDb 或 豆瓣 大于输入值
 * 2022.10.4: 加入大小介于过滤，单位GB，使用`,`分隔；
@@ -34,19 +33,21 @@
 * 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
 * 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
 
-### 提交查重下载后，返回3种结果
-* 提交下载后，页面中种子背景会改为3种可能的颜色：
-![三种结果](https://ptpimg.me/3cgnss.png)
+### 提交查重下载后，返回几种结果
+* 提交下载后，页面中种子背景会改为若干种可能的颜色：
+![3种结果](https://ptpimg.me/3cgnss.png)
 1. 库中没有，提交qBittorrent下载了
 2. 库中已有，跳过，不下载
 3. TMDb没有查到，当前也是跳过不下载
+4. dupapi无法提交给下载器出错时，返回400，在页面上显示红色
+5. since 2022.10.12, 新增一种颜色`darkturquoise`，在种子列表页无法取得下载链接时，仅作查重而不下载
 
 
 ### Note:
 * Ssd 不支持国语，中字标签搜索
 * ob, chd, ssd的下载链接无passkey，拼合usercp中的passkey构成下载链接
 * ade 的下载链接是downhash形式，无法拼合，当前没有办法批量下载
-* pter, chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测
+* pter, chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测。在详情页中查重和下载，会取得imdb id和下载链接，相对更可靠
 
 -----
 
@@ -100,6 +101,9 @@ python dupapi.py --init-library
 ```
 * 初始化命令运行后将会退出
 * sqlite 数据库存在当前目录下的 `instance` 目录中，如果想要重新初始化，可直接 `rm -rf instance` 删除再重建
+* 如果以非空库运行 `--init-library` 则数据会添加并不报错
+* 如果同时配置了Emby和Plex，则两个库内容都会添加
+
 
 ## 启动 dupapi 服务
 * 当前内置的监听端口为 `3006`，这个端口号是与 `torfilter.js` 中对应的。若要修改，则两边代码中对应查找修改。
@@ -114,7 +118,8 @@ python dupapi.py
 curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen Ground 2013 1080p BluRay x265 10bit DTS-ADE", "imdb": "tt2005374", "downloadlink": "https://audiences.me/download.php?id=71406&...."}' http://localhost:3000/p/api/v1.0/dupedownload
 ```
 
+### 注意：
 * dupapi 服务设计为本地临时启用用途，暂无密码防护
-
+* dupapi接受浏览器插件torfilter连接，会连themoviedb.org查TMDb，会连qbit下载器进行下载；所以需三方网络都通，特别地，连接TMDb查询，可能需配置 host 或 梯；
 
 
