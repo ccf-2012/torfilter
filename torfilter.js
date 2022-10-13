@@ -741,7 +741,7 @@ function _getDownloadUrlByPossibleHrefs() {
 function getIMDb() {
   let bodytext = $("body").text();
   let datas =
-    /IMDb(链接)\s*(\<.[!>]*\>)?.*https:\/\/www\.imdb\.com\/title\/(tt\d+)/.exec(
+    /(\<.[!>]*\>)?.*https:\/\/www\.imdb\.com\/title\/(tt\d+)/.exec(
       bodytext
     );
   if (datas && datas.length > 1) {
@@ -790,6 +790,8 @@ var asyncDetailApiDownload = async (html) => {
   // dllink = $("#torrent_dl_url > a").href()
   // TODO: 
   let titlestr = $("#top").text();
+  titlestr = titlestr.replace(/\[?禁转\]?\s*/, "")
+  titlestr = titlestr.replace(/\s*\[(50%|30%|(2X)?免费)\].*$/, "")
   let dllink = _getDownloadUrlByPossibleHrefs();
   if (dllink) {
     let imdbid = getIMDb();
