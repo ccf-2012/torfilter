@@ -43,9 +43,10 @@
 
 
 ### Note:
-* Ssd 不支持国语，中字标签搜索, ssd的下载链接无passkey，~~无法直接用~~，拼合usercp中的passkey构成下载链接
-* Ob 的下载链接无passkey，~~无法直接用~~ 拼合usercp中的passkey构成下载链接
-* PTer 个人设置中可设置是否打开预览，打开会多一列，现已都支持 credit @Aruba
+* Ssd 不支持国语，中字标签搜索
+* ob, chd, ssd的下载链接无passkey，拼合usercp中的passkey构成下载链接
+* ade 的下载链接是downhash形式，无法拼合，当前没有办法批量下载
+* pter, chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测
 
 -----
 
