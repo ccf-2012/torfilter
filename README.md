@@ -48,6 +48,7 @@
 * ob, chd, ssd的下载链接无passkey，拼合usercp中的passkey构成下载链接
 * ade 的下载链接是downhash形式，无法拼合，当前没有办法批量下载
 * pter, chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测。在详情页中查重和下载，会取得imdb id和下载链接，相对更可靠
+* chd 未作种是包含已下载的
 
 -----
 

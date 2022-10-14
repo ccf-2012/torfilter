@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.7.4
+// @version      0.7.5
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
+// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
@@ -34,12 +34,17 @@ const skip_passkey = async () => {
 };
 
 //  ====== pter
-const pter_imdb = (element) => {
+const pter_imdbval = (element) => {
   var t = $(element).find(
     "td:nth-child(2) > table > tbody > tr > td > a:nth-child(1) > span"
   );
   return t.text();
 };
+const pter_imdbid = (element) => {
+  var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(7) span");
+  return (t && t.attr("data-imdbid")) ? 'tt'+t.attr("data-imdbid") : ''
+};
+
 const pter_douban = (element) => {
   var d = $(element).find(
     "td:nth-child(2) > table > tbody > tr > td > a:nth-child(2) > span"
@@ -238,8 +243,8 @@ var config = [
     eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
     filterGY: true,
     filterZZ: true,
-    funcIMDb: pter_imdb,
-    funcIMDbId: not_supported,
+    funcIMDb: pter_imdbval,
+    funcIMDbId: pter_imdbid,
     funcDouban: pter_douban,
     funcSeeding: pter_seeding,
     funcGetPasskey: skip_passkey,
