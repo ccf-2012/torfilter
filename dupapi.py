@@ -41,6 +41,9 @@ class configData():
     interval = 3
     plexServer = ''
     plexToken = ''
+    embyServer = ''
+    embyUser = ''
+    embyPass = ''
     qbServer = ''
     tmdb_api_key = ''
     qbPort = ''
