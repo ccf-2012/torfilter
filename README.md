@@ -106,6 +106,19 @@ python dupapi.py --init-library
 * 如果同时配置了Emby和Plex，则两个库内容都会添加
 
 
+```
+ python dupapi.py -h 
+usage: dupapi.py [-h] [--init-library] [--load-library] [--fill-tmdb]
+
+A torrent handler does library dupe check, add qbit with tag, etc.
+
+options:
+  -h, --help      show this help message and exit
+  --init-library  init database with plex query.
+  --load-library  init database with plex query, without delete old data.
+  --fill-tmdb     fill tmdb field if it miss.
+```
+
 ## 启动 dupapi 服务
 * 当前内置的监听端口为 `3006`，这个端口号是与 `torfilter.js` 中对应的。若要修改，则两边代码中对应查找修改。
 * 当前过滤脚本 `torfilter.js` 会连接 `localhost` 中的 `dupapi`服务，如果部署在不同机器上，则在 `torfilter.js` 中查找修改。

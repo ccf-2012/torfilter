@@ -268,6 +268,8 @@ def loadEmbyLibrary():
     print("Create Database....")
     with app.app_context():
         db.create_all()
+    if not ARGS.load_library:
+        emptyTable()
 
     print("Connect to the Emby server: " + CONFIG.embyServer)
     ec = EmbyClient(CONFIG.embyServer, CONFIG.embyUser, CONFIG.embyPass)
@@ -294,6 +296,15 @@ def loadEmbyLibrary():
             db.session.add(pi)
             db.session.commit()
 
+def emptyTable():
+    try:
+        with app.app_context():
+            num_rows_deleted = db.session.query(MediaItem).delete()
+            db.session.commit()
+            return num_rows_deleted
+    except:
+        db.session.rollback()
+        return 0 
 
 # @app.route('/sitetor/api/v1.0/init', methods=['GET'])
 def loadPlexLibrary():
@@ -303,6 +314,9 @@ def loadPlexLibrary():
     print("Create Database....")
     with app.app_context():
         db.create_all()
+    
+    if not ARGS.load_library:
+        emptyTable()
 
     print("Connect to the Plex server: " + CONFIG.plexServer)
     baseurl = CONFIG.plexServer  # 'http://{}:{}'.format(ip, port)
@@ -404,6 +418,8 @@ def loadArgs():
     )
     parser.add_argument('--init-library', action='store_true',
                         help='init database with plex query.')
+    parser.add_argument('--load-library', action='store_true',
+                        help='init database with plex query, without delete old data.')
     parser.add_argument('--fill-tmdb', action='store_true',
                         help='fill tmdb field if it miss.')
     ARGS = parser.parse_args()
