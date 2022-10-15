@@ -268,7 +268,7 @@ def loadEmbyLibrary():
     print("Create Database....")
     with app.app_context():
         db.create_all()
-    if not ARGS.load_library:
+    if not ARGS.append:
         emptyTable()
 
     print("Connect to the Emby server: " + CONFIG.embyServer)
@@ -315,7 +315,7 @@ def loadPlexLibrary():
     with app.app_context():
         db.create_all()
     
-    if not ARGS.load_library:
+    if not ARGS.append:
         emptyTable()
 
     print("Connect to the Plex server: " + CONFIG.plexServer)
@@ -418,8 +418,8 @@ def loadArgs():
     )
     parser.add_argument('--init-library', action='store_true',
                         help='init database with plex query.')
-    parser.add_argument('--load-library', action='store_true',
-                        help='init database with plex query, without delete old data.')
+    parser.add_argument('--append', action='store_true',
+                        help='load plex to local database, without delete old data.')
     parser.add_argument('--fill-tmdb', action='store_true',
                         help='fill tmdb field if it miss.')
     ARGS = parser.parse_args()
