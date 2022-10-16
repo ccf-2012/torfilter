@@ -418,8 +418,8 @@ def loadArgs():
     )
     parser.add_argument('--init-library', action='store_true',
                         help='init database with plex query.')
-    parser.add_argument('--append', action='store_true',
-                        help='load plex to local database, without delete old data.')
+    parser.add_argument('-a', '--append', action='store_true',
+                        help='append to local database, without delete old data.')
     parser.add_argument('--fill-tmdb', action='store_true',
                         help='fill tmdb field if it miss.')
     ARGS = parser.parse_args()
