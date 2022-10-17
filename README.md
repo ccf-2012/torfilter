@@ -1,7 +1,13 @@
 
 # PT站过滤下载入库流程
-![dataflow](https://ptpimg.me/lj7n0o.png)
+* 这是一套基于pt站点的下片入库方案，整体流程如下：
 
+![dataflow](https://ptpimg.me/07ivzz.png)
+
+1. 种子列表过滤脚本`torfilter.js`在PT站上过滤出的种子，提交种子信息给`dupapi.py`进行处理
+2. `dupapi.py` 将下载链接和imdb信息交给qBittorrent启动下载
+3. qBittorrent下载完成调用脚本让`torcp` 进行目录重新组织
+4. 组织好的媒体文件，Plex可刮削入库
 
 ## Last update:
 * 2022.10.12: 支持Emby，支持pt站上detail页上查重和下载
@@ -53,8 +59,6 @@
 -----
 
 # 本地下载入库api服务 dupapi
-
-![dupapi](https://ptpimg.me/16cpc0.png)
 
 ## 前置准备
 1. python环境
