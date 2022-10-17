@@ -41,20 +41,23 @@
 * 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
 
 ### 提交查重下载后，返回几种结果
-* 提交下载后，页面中种子背景会改为若干种可能的颜色：
+* 提交下载后，页面中种子背景会改为若干种可能的颜色 ：
 ![3种结果](https://ptpimg.me/3cgnss.png)
+> 图中filterapi，已改名dupapi，since 2022.10.12
+
+
 1. 库中没有，提交qBittorrent下载了
 2. 库中已有，跳过，不下载
 3. TMDb没有查到，当前也是跳过不下载
 4. dupapi无法提交给下载器出错时，返回400，在页面上显示红色
-5. since 2022.10.12, 新增一种颜色`darkturquoise`，在种子列表页无法取得下载链接时，仅作查重而不下载
+5. since 2022.10.12, 新增一种颜色`darkturquoise`，在种子列表页无法取得下载链接时，表示未重复但不下载
 
 
 ### Note:
 * Ssd 不支持国语，中字标签搜索
 * ob, chd, ssd的下载链接无passkey，拼合usercp中的passkey构成下载链接
 * ade 的下载链接是downhash形式，无法拼合，当前没有办法批量下载
-* pter, chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测。在详情页中查重和下载，会取得imdb id和下载链接，相对更可靠
+* chd种子列表页面中取不到imdb id，是使用种子名称以torcp进行解析猜测。在详情页中查重和下载，会取得imdb id和下载链接，相对更可靠
 * chd 未作种是包含已下载的
 
 -----
@@ -105,9 +108,9 @@ pass=MyQbitPassword
 ```sh
 python dupapi.py --init-library
 ```
-* 初始化命令运行后将会退出
+* 初始化命令运行完成后将会退出
 * sqlite 数据库存在当前目录下的 `instance` 目录中，如果想要重新初始化，可直接 `rm -rf instance` 删除再重建
-* 如果以非空库运行 `--init-library` 则数据会添加并不报错
+* 如果以非空库运行 `--init-library` 则原有数据会清除，如果要保留现有数据库中的数据添加新数据，可加 `--append` 参数
 * 如果同时配置了Emby和Plex，则两个库内容都会添加
 
 ### 命令使用
@@ -143,6 +146,7 @@ python dupapi.py --fill-tmdb
 * 如果不带参数执行 `dupapi.py` 则将启动 dupapi 服务，这是一个web api服务。
 * 当前内置的监听端口为 `3006`，这个端口号是与 `torfilter.js` 中对应的。若要修改，则两边代码中对应查找修改。
 * 当前过滤脚本 `torfilter.js` 会连接 `localhost` 中的 `dupapi`服务，如果部署在不同机器上，则在 `torfilter.js` 中查找修改。
+
 * 启动 dupapi 服务：
 ```sh 
 python dupapi.py
