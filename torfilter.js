@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.7.5
+// @version      0.7.6
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -423,7 +423,7 @@ function addFilterPanel() {
 
 function addDetailPagePanel() {
   $(`
-  <div style=" width: 60px; height: 80px; position: fixed; top: 120px; right: 5px; z-index: 9999; ">
+  <div style=" width: 70px; height: 120px; position: fixed; top: 180px; right: 5px; z-index: 9999; ">
     <table align='center'> <tr>
     <td style='border: none;'>
         <button type="button" id="btn-detail-checkdupe" style="margin-top: 5px;margin-left: 5px;color: rgb(25, 118, 210);  justify-content: center; align-items: center;" >
@@ -433,8 +433,15 @@ function addDetailPagePanel() {
     </tr>
     <tr>
     <td style=' border: none;'>
-        <button type="button" id="btn-detail-apidownload" style="margin-top: 5px;margin-left: 5px;color: rgb(25, 118, 210);  justify-content: center; align-items: center;">
+        <button type="button" id="btn-detail-forceapidownload" style="margin-top: 5px;margin-left: 5px;color: rgb(25, 118, 210);  justify-content: center; align-items: center;">
         下载
+        </button>
+    </td>
+    </tr>
+    <tr>
+    <td style=' border: none;'>
+        <button type="button" id="btn-detail-apidownload" style="margin-top: 5px;margin-left: 5px;color: rgb(25, 118, 210);  justify-content: center; align-items: center;">
+        查&下
         </button>
     </td>
     </tr>
@@ -787,13 +794,14 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
   });
 };
 
-var asyncDetailApiDownload = async (html) => {
+var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
   // TODO: 
   let titlestr = $("#top").text();
   titlestr = titlestr.replace(/\[?禁转\]?\s*/, "")
   titlestr = titlestr.replace(/\s*\[(50%|30%|(2X)?免费)\].*$/, "")
+  titlestr = titlestr.replace(/\s*\(限时.*$/, "")
   let dllink = _getDownloadUrlByPossibleHrefs();
   if (dllink) {
     let imdbid = getIMDb();
@@ -801,6 +809,7 @@ var asyncDetailApiDownload = async (html) => {
       torname: titlestr,
       imdbid: imdbid,
       downloadlink: dllink,
+      force: forcedl
     };
     // console.log(tordata);
     await postToDetailCheckDupeApi(
@@ -844,7 +853,11 @@ function onClickApiDownload(html) {
 }
 
 function onClickDetailDownload(html) {
-  asyncDetailApiDownload(html);
+  asyncDetailApiDownload(html, false);
+}
+
+function onClickDetailForceDownload(html) {
+  asyncDetailApiDownload(html, true);
 }
 
 var asyncDetailCheckDupe = async (html) => {
@@ -910,6 +923,9 @@ function addAdoptColumn(html) {
       });
       $("#btn-detail-apidownload").click(function () {
         onClickDetailDownload(document);
+      });
+      $("#btn-detail-forceapidownload").click(function () {
+        onClickDetailForceDownload(document);
       });
     } else {
       addAdoptColumn(document);

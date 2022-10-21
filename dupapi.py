@@ -112,11 +112,15 @@ def checkDupAddTor():
         imdbstr = request.json['imdbid'].strip()
     torTMDb = searchTMDb(p, request.json['torname'], imdbstr)
 
+    forceDownload = False
+    if 'force' in request.json:
+        forceDownload = request.json['force']
+
     if torTMDb > 0:
         # q = db.session.query(PlexItem).filter_by(tmdb=torTMDb).first()
         exists = db.session.query(db.exists().where(
             MediaItem.tmdb == torTMDb)).scalar()
-        if (exists):
+        if (exists) and (not forceDownload):
             return jsonify({'Dupe': True}), 202
         else:
             # print("Download: " + request.json['torname'] + "  "+request.json['downloadlink'])
