@@ -4,9 +4,9 @@
 
 ![dataflow](https://ptpimg.me/07ivzz.png)
 
-1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在浏览PT站页面时可以辅助过滤种子，选中的种子可以提交信息给`dupapi.py`进行处理
+1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在PT站页面添加一些辅助过滤的功能，选中的种子可以提交信息给`dupapi.py`进行处理
 2. `dupapi.py` 是一个api服务，可对提交来的信息在本地的媒体库中查重，并将下载链接和imdb信息交给qBittorrent启动下载
-3. qBittorrent下载完成调用脚本让 `torcp` 进行目录重新组织，参考[这里的文档说明](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md)
+3. qBittorrent下载完成调用脚本交 `torcp` 进行目录重新组织，参考 [这里的详细文档](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md)
 4. 组织好的媒体文件，Plex可刮削入库
 
 
@@ -160,5 +160,6 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 ### 注意：
 * dupapi 服务设计为本地临时启用用途，暂无密码防护
 * dupapi接受浏览器插件torfilter连接，会连themoviedb.org查TMDb，会连qbit下载器进行下载；所以需三方网络都通，特别地，连接TMDb查询，可能需配置 host 或 梯；
+* dupapi当前对于剧集，没有分辨季与集，只要有就判重，后续再细化。
 
 
