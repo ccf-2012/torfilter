@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.7.7
+// @version      0.7.8
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -798,10 +798,11 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
   // TODO: 
-  let titlestr = $("#top").text();
+  let titlestr = $("#top").text().trim();
+  titlestr = titlestr.replace(/\[?禁转\s*/, "")
   titlestr = titlestr.replace(/\[[^\]]+\]\s*$/, "")
   titlestr = titlestr.replace(/\s*\[(50%|30%|(2X)?免费)\].*$/, "")
-  titlestr = titlestr.replace(/\s*\(限时.*$/, "")
+  titlestr = titlestr.replace(/\s*\(限时.*$/, "").trim()
   let dllink = _getDownloadUrlByPossibleHrefs();
   if (dllink) {
     let imdbid = getIMDb();
