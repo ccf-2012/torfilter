@@ -330,6 +330,9 @@ def loadPlexLibrary():
         for n in range(MAX_RETRY):
             try:
                 pi = MediaItem(title=video.title)
+                pi.originalTitle = video.originalTitle
+                pi.librarySectionID = video.librarySectionID
+                pi.audienceRating = tryFloat(video.audienceRating)
                 break
             except Exception as e:
                 if n < MAX_RETRY:
@@ -340,9 +343,7 @@ def loadPlexLibrary():
                     print('Fail to reload the video MAX_RETRY(%d) times' % (MAX_RETRY))
                     os._exit(1)
             
-        pi.originalTitle = video.originalTitle
-        pi.librarySectionID = video.librarySectionID
-        pi.audienceRating = tryFloat(video.audienceRating)
+        # pi.originalTitle = video.originalTitle
         pi.guid = video.guid
         pi.key = video.key
         if len(video.locations) > 0:
