@@ -1,5 +1,4 @@
 # curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen Ground 2013 1080p BluRay x265 10bit DTS-ADE", "imdb": "tt2005374", "downloadlink": "https://audiences.me/download.php?id=71406&...."}' http://localhost:3000/p/api/v1.0/checkdupe
-
 from flask import Flask, jsonify
 from flask import abort
 from flask import make_response
@@ -16,7 +15,7 @@ from emby_client import EmbyClient
 import configparser
 import argparse
 import qbittorrentapi
-
+import time
 
 # auth = HTTPBasicAuth()
 
@@ -36,7 +35,7 @@ app.config[
 db = SQLAlchemy(app)
 # db.init_app(app)
 
-
+MAX_RETRY = 5
 class configData():
     interval = 3
     plexServer = ''
@@ -328,7 +327,19 @@ def loadPlexLibrary():
     # movies = plex.library.section(sectionstr)
     p = TMDbNameParser(CONFIG.tmdb_api_key, 'en')
     for idx, video in enumerate(plex.library.all()):
-        pi = MediaItem(title=video.title)
+        for n in range(MAX_RETRY):
+            try:
+                pi = MediaItem(title=video.title)
+                break
+            except Exception as e:
+                if n < MAX_RETRY:
+                    print('Fail to reload the video' + str(e))
+                    print('retry %d time.' % (n+1))
+                    time.sleep(2)
+                else:
+                    print('Fail to reload the video MAX_RETRY(%d) times' % (MAX_RETRY))
+                    os._exit(1)
+            
         pi.originalTitle = video.originalTitle
         pi.librarySectionID = video.librarySectionID
         pi.audienceRating = tryFloat(video.audienceRating)
