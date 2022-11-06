@@ -409,7 +409,7 @@ def readConfig():
 
 def searchTMDb(TmdbParser, title, imdb):
     if imdb:
-        TmdbParser.parse(title, useTMDb=True, hasIMDb=imdb)
+        TmdbParser.parse(title, useTMDb=True, hasIMDbId=imdb)
     else:
         TmdbParser.parse(title, useTMDb=True)
     return TmdbParser.tmdbid
