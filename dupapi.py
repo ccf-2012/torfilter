@@ -321,6 +321,7 @@ def loadPlexLibrary():
     if not ARGS.append:
         emptyTable()
 
+    tstart = time.time()
     print("Connect to the Plex server: " + CONFIG.plexServer)
     baseurl = CONFIG.plexServer  # 'http://{}:{}'.format(ip, port)
     plex = PlexServer(baseurl, CONFIG.plexToken)
@@ -374,6 +375,7 @@ def loadPlexLibrary():
             db.session.commit()
         print("%d : %s , %s , %s, %s" % (idx, video.title,
               video.originalTitle, video.locations, video.guids))
+    print(time.strftime("%H:%M:%S", time.gmtime(time.time()-tstart)))
 
 
 def readConfig():
