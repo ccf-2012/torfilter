@@ -522,7 +522,6 @@ const getCookieValue = (name) =>
 function loadParamFromCookie() {
   var cc = getCookieValue("filterParam");
   if (cc) {
-    // console.log('Get from cookie:'+cc);
     fillParam(cc);
   }
 }
@@ -631,10 +630,14 @@ var onClickFilterList = (html) => {
         keepShow = false;
       }
     }
+    let titledesc = ""
     if ($("#titledescregex").val()) {
       let regex = new RegExp($("#titledescregex").val(), "gi");
-      let titledesc = $(element).find(THISCONFIG.eleTorItemDesc);
-      if (titledesc.text().match(regex)) {
+      titleele = $(element).find(THISCONFIG.eleTorItemDesc);
+      if (titleele){
+        titledesc = titleele.text()
+      }
+      if (titledesc.match(regex)) {
         keepShow = false;
       }
     }
@@ -664,6 +667,7 @@ var onClickFilterList = (html) => {
       $(element).show();
     } else {
       $(element).hide();
+      console.log("Filtered: "+ titlestr+" : "+titledesc)
       filterCount++;
     }
   }
@@ -704,16 +708,16 @@ var postToFilterDownloadApi = async (tordata, ele) => {
     onload: function (response) {
       if (response.status == 202) {
         $(ele).css("background-color", "lightgray");
-        console.log("Dupe: " + tordata.torname);
+        // console.log("Dupe: " + tordata.torname);
       } else if (response.status == 201) {
         $(ele).css("background-color", "darkseagreen");
-        console.log("Add download: " + tordata.torname);
+        // console.log("Add download: " + tordata.torname);
       } else if (response.status == 205) {
         $(ele).css("background-color", "darkturquoise");
-        console.log("no dupe but no download: " + tordata.torname);
+        // console.log("no dupe but no download: " + tordata.torname);
       } else if (response.status == 203) {
         $(ele).css("background-color", "lightpink");
-        console.log("TMDbNotFound: " + tordata.torname);
+        // console.log("TMDbNotFound: " + tordata.torname);
       } else {
         $(ele).css("background-color", "red");
         console.log("Error: " + response);
@@ -812,7 +816,6 @@ var asyncDetailApiDownload = async (html, forcedl) => {
       downloadlink: dllink,
       force: forcedl
     };
-    // console.log(tordata);
     await postToDetailCheckDupeApi(
       "http://localhost:3006/p/api/v1.0/dupedownload",
       tordata
@@ -840,7 +843,6 @@ var asyncApiDownload = async (html) => {
           imdbid: imdbid,
           downloadlink: dllink,
         };
-        // console.log(tordata);
         await postToFilterDownloadApi(tordata, element);
         await sleep(2000);
       }
@@ -873,7 +875,6 @@ var asyncDetailCheckDupe = async (html) => {
       imdbid: imdbid,
       downloadlink: dllink,
     };
-    // console.log(tordata);
     await postToDetailCheckDupeApi(
       "http://localhost:3006/p/api/v1.0/checkdupeonly",
       tordata
