@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.7.8
+// @version      0.7.9
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -112,17 +112,19 @@ const ade_seeding = (element) => {
   // return d.text() === "100%";
 };
 
-// const ade_passkey = async () => {
-//     let html =  await $.get("usercp.php")
-//     // debugger;
-//     // $(html).find("#passkey").css("display", "");
-//     let passkeyRow = $(html).find("#passkey");
-//     if (passkeyRow.length > 0){
-//         let key = passkeyRow.text().replace('（妥善保管，请勿泄露）', '');
-//         return "&passkey=" + key.trim() + "&https=1" ;
-//     }
-//     return "" ;
-// };
+
+
+const ade_passkey = async () => {
+    let html =  await $.get("usercp.php")
+    // debugger;
+    // $(html).find("#passkey").css("display", "");
+    let passkeyRow = $(html).find("#passkey");
+    if (passkeyRow.length > 0){
+        let key = passkeyRow.text().replace('（妥善保管，请勿泄露）', '');
+        return "&passkey=" + key.trim() + "&https=1" ;
+    }
+    return "" ;
+};
 
 //  ====== ob
 const ob_imdbval = (element) => {
@@ -300,7 +302,7 @@ var config = [
     funcIMDbId: ade_imdbid,
     funcDouban: ade_douban,
     funcSeeding: ade_seeding,
-    funcGetPasskey: skip_passkey,
+    funcGetPasskey: ade_passkey,
     // eleTorDetailTable: "tr:contains('副标题'):last",
   },
   {
