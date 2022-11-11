@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤与认领
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.7.9
+// @version      0.8.0
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -22,6 +22,12 @@
 // @match        https://ourbits.club/details.php*
 // @match        https://springsunday.net/torrents.php*
 // @match        https://springsunday.net/details.php*
+// @match        https://www.beitai.pt/torrents.php*
+// @match        https://www.beitai.pt/details.php*
+// @match        https://totheglory.im/browse.php?*
+// @match        https://totheglory.im/t/*
+// @match        https://pt.keepfrds.com/torrents.php*
+// @match        https://pt.keepfrds.com/details.php*
 
 // ==/UserScript==
 
@@ -225,6 +231,87 @@ const ssd_detailTable = (html) => {
   } else return null;
 };
 
+
+//  ====== ttg
+const ttg_imdbval = (element) => {
+  var t = $(element).find("td:nth-child(2) > div.name_right > span.imdb_rate > a");
+  let imdb = "";
+  if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")) {
+    imdb = t.text();
+  }
+  return imdb;
+};
+
+const ttg_imdbid = (element) => {
+  var t = $(element).find("td:nth-child(2) > div.name_right > span.imdb_rate > a").attr("href");
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
+const ttg_seeding = (element) => {
+  var d = $(element).find("td:nth-child(2) > div.process.green > span");
+  return d.length > 0;
+};
+
+const ttg_passkey = async () => {
+  let html = await $.get("my.php");
+  let passkeyRow = $("td", $(html)).filter(function() {
+    return $(this).text() == "Passkey";
+  }).closest("tr");
+
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return key.trim();
+  }
+  return "";
+};
+
+
+// beitai
+const beitai_seeding = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  return d.text().includes("100%");
+};
+
+const beitai_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim() + "&https=1";
+  }
+  return "";
+};
+
+//  ====== frds
+const frds_imdbval = (element) => {
+  var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > img:nth-child(2)");
+  let imdb = "";
+  if (t.attr("src") && t.attr("src").includes("imdb")) {
+    imdb = t.parent().text();
+    imdb = imdb.replace(/(-+|\d+\.\d*)\s*$/, '').trim()
+  }
+  return imdb;
+};
+
+
+const frds_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim() + "&https=1";
+  }
+  return "";
+};
+
+const frds_seeding = (element) => {
+  var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > div:nth-child(1)");
+  return d.length > 0;
+};
+
 var config = [
   {
     host: "pterclub.com",
@@ -243,6 +330,7 @@ var config = [
     // eleCHNAreaTag: "img.chn",
     eleDownLink: "td:nth-child(2) > table > tbody > tr > td > a:first",
     eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+    eleDetailTitle: "#top",
     filterGY: true,
     filterZZ: true,
     funcIMDb: pter_imdbval,
@@ -269,6 +357,7 @@ var config = [
     eleDownLink:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+    eleDetailTitle: "#top",
     filterGY: true,
     filterZZ: true,
     funcIMDb: chd_imdb,
@@ -296,6 +385,7 @@ var config = [
     eleDownLink:
       "td > div.torrents-name > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
     filterGY: true,
     filterZZ: true,
     funcIMDb: ade_imdbval,
@@ -322,6 +412,7 @@ var config = [
     eleDownLink:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(5) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+    eleDetailTitle: "#top",
     filterGY: true,
     filterZZ: true,
     funcIMDb: ob_imdbval,
@@ -347,6 +438,7 @@ var config = [
     eleDownLink:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
     filterGY: false,
     filterZZ: false,
     funcIMDb: ssd_imdbval,
@@ -355,6 +447,84 @@ var config = [
     funcSeeding: ssd_seeding,
     funcGetPasskey: ssd_passkey,
   },
+  {
+    host: "totheglory.im",
+    eleTorTable: "#torrent_table",
+    eleCurPage: "#main_table > tbody > tr:nth-child(1) > td > p:nth-child(9) > a:nth-child(5) > b",
+    eleTorList: "#torrent_table > tbody > tr",
+    eleTorItem: "td:nth-child(2) > div.name_left > a > b",
+    eleTorItemDesc: "td:nth-child(2) > div.name_left > a > b > span",
+    eleTorItemSize: "td:nth-child(7)",
+    eleTorItemSeednum: "td:nth-child(9) > b:nth-child(1)",
+    eleTorItemAdded: "td:nth-child(5) > nobr",
+    useTitleName: 3,
+    eleIntnTag: "",
+    eleCnLangTag: "",
+    eleCnSubTag: "",
+    eleDownLink:
+      "td:nth-child(2) > div.name_right > span:nth-child(1) > a.dl_a",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: ttg_imdbval,
+    funcIMDbId: ttg_imdbid,
+    funcDouban: not_supported,
+    funcSeeding: ttg_seeding,
+    funcGetPasskey: ttg_passkey,
+  },  
+  {
+    host: "pt.keepfrds.com",
+    eleTorTable: "#form_torrent > table",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(2) > font",
+    eleTorList: "#form_torrent > table > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6) > b > a",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 2,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-zz",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > a",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#outer > table:nth-child(2) > tbody > tr:nth-child(2) > td.rowfollow",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: frds_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: frds_seeding,
+    funcGetPasskey: frds_passkey,
+  },
+  {
+    host: "www.beitai.pt",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-zz",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: not_supported,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: beitai_seeding,
+    funcGetPasskey: beitai_passkey,
+  },  
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
@@ -572,8 +742,11 @@ function getItemTitle(item) {
       if (eletitle.data) titlestr = eletitle.data;
       else if (eletitle.firstChild.data) titlestr = eletitle.firstChild.data;
     }
+  } else if (THISCONFIG.useTitleName == 3) {
+    let titlehtml = item.html()
+    titlestr = titlehtml.substring(0, titlehtml.indexOf('<br><span'));
   }
-  return titlestr;
+  return titlestr.trim();
 }
 
 var onClickFilterList = (html) => {
@@ -635,7 +808,7 @@ var onClickFilterList = (html) => {
     let titledesc = ""
     if ($("#titledescregex").val()) {
       let regex = new RegExp($("#titledescregex").val(), "gi");
-      titleele = $(element).find(THISCONFIG.eleTorItemDesc);
+      let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
       if (titleele){
         titledesc = titleele.text()
       }
@@ -687,7 +860,8 @@ var asyncCopyLink = async (html) => {
     if ($(torlist[index]).is(":visible")) {
       let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
       if (hrefele.length > 0) {
-        resulttext += hrefele.prop("href") + passKeyStr + "\n";
+        let dllink = genDownloadLink(hrefele.prop("href"), passKeyStr);
+        resulttext += dllink + "\n";
       }
     }
   }
@@ -745,6 +919,7 @@ function _getDownloadUrlByPossibleHrefs() {
     "a[href*='passkey'][href*='https']",
     // hdchina
     "a[href*='hash'][href*='https']",
+    "a[href*='https://totheglory.im/dl/']"
   ];
 
   for (const href of possibleHrefs) {
@@ -758,7 +933,7 @@ function _getDownloadUrlByPossibleHrefs() {
 
 function getIMDb() {
   let bodytext = $("body").text();
-  let datas = /https:\/\/www\.imdb\.com\/title\/(tt\d+)/.exec( bodytext );
+  let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( bodytext );
   if (datas && datas.length > 1) {
     return datas[1];
   }
@@ -804,11 +979,8 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
   // TODO: 
-  let titlestr = $("#top").text().trim();
-  titlestr = titlestr.replace(/\[?禁转\s*/, "")
-  titlestr = titlestr.replace(/\[[^\]]+\]\s*$/, "")
-  titlestr = titlestr.replace(/\s*\[(50%|30%|(2X)?免费)\].*$/, "")
-  titlestr = titlestr.replace(/\s*\(限时.*$/, "").trim()
+  let titlestr = getDetailTitle();
+
   let dllink = _getDownloadUrlByPossibleHrefs();
   if (dllink) {
     let imdbid = getIMDb();
@@ -825,6 +997,16 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   }
 };
 
+function genDownloadLink(link, passKeyStr) {
+  if (THISCONFIG.host == "totheglory.im")
+  {
+    return link.replace(/\d+$/, "") + passKeyStr;
+  }
+  else{
+    return link + passKeyStr;
+  }
+}
+
 var asyncApiDownload = async (html) => {
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
@@ -839,7 +1021,7 @@ var asyncApiDownload = async (html) => {
       let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
 
       if (hrefele.length > 0) {
-        let dllink = hrefele.prop("href") + passKeyStr;
+        let dllink = genDownloadLink(hrefele.prop("href"), passKeyStr);
         var tordata = {
           torname: titlestr,
           imdbid: imdbid,
@@ -865,10 +1047,20 @@ function onClickDetailForceDownload(html) {
   asyncDetailApiDownload(html, true);
 }
 
+function getDetailTitle() {
+  let titlestr = $(THISCONFIG.eleDetailTitle).text().trim();
+  titlestr = titlestr.replace(/\[?禁转\s*/, "")
+  titlestr = titlestr.replace(/\[[^\]]+\]\s*$/, "")
+  titlestr = titlestr.replace(/\s*\[(50%|30%|(2X)?免费)\].*$/, "")
+  titlestr = titlestr.replace(/\s*\(限时.*$/, "").trim()
+  return titlestr;
+}
+
 var asyncDetailCheckDupe = async (html) => {
   $("#detail-log").text("处理中..");
   // dllink = $("#torrent_dl_url > a").href()
-  let titlestr = $("#top").text();
+  // let titlestr = $("#top").text();
+  let titlestr = getDetailTitle();
   let dllink = _getDownloadUrlByPossibleHrefs();
   if (dllink) {
     let imdbid = getIMDb();
@@ -881,6 +1073,10 @@ var asyncDetailCheckDupe = async (html) => {
       "http://localhost:3006/p/api/v1.0/checkdupeonly",
       tordata
     );
+  }
+  else {
+    console.log("download link not found.")
+    $("#detail-log").text("无下载链接");
   }
 };
 
@@ -920,7 +1116,8 @@ function addAdoptColumn(html) {
 (function () {
   "use strict";
   if (THISCONFIG) {
-    if (window.location.href.match(/details.php/)) {
+    if (window.location.href.match(/details.php/) || 
+        window.location.href.match(/totheglory.im\/t/) ) {
       addDetailPagePanel();
       $("#btn-detail-checkdupe").click(function () {
         onClickDetailCheckDup(document);

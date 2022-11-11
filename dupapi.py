@@ -86,7 +86,7 @@ class MediaItem(db.Model):
 
 
 def validDownloadlink(downlink):
-    keystr = ['passkey', 'downhash']
+    keystr = ['passkey', 'downhash', 'totheglory.im/dl/']
     return any(x in downlink for x in keystr)
 
 
@@ -123,18 +123,18 @@ def checkDupAddTor():
             return jsonify({'Dupe': True}), 202
         else:
             # print("Download: " + request.json['torname'] + "  "+request.json['downloadlink'])
-            if not CONFIG.dryrun:
-                if 'downloadlink' in request.json:
-                    if not validDownloadlink(request.json['downloadlink']):
-                        print("Not valid torrent downlink: " +
-                              request.json['torname'])
-                        return jsonify({'no dupe but not download': True}), 205
+            if 'downloadlink' in request.json:
+                if not validDownloadlink(request.json['downloadlink']):
+                    print("Not valid torrent downlink: " + request.json['torname'])
+                    return jsonify({'no download link': True}), 205
 
+                if not CONFIG.dryrun:
                     print("Added: " + request.json['torname'])
                     if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
                         abort(400)
-            else:
-                print("DRYRUN: " + request.json['torname'])
+                else:
+                    # print("DRYRUN: " + request.json['torname'])
+                    print("DRYRUN: " + request.json['torname'] + "\n" + request.json['downloadlink'])
 
             return jsonify({'Download': True}), 201
     else:
