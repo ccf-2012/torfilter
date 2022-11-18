@@ -299,6 +299,7 @@ def loadEmbyLibrary():
             db.session.add(pi)
             db.session.commit()
 
+
 def emptyTable():
     try:
         with app.app_context():
@@ -308,6 +309,15 @@ def emptyTable():
     except:
         db.session.rollback()
         return 0 
+
+
+def plexKeyExists(videokey):
+    with app.app_context():
+        exists = db.session.query(db.exists().where(MediaItem.key == videokey)).scalar()
+    #     exists = db.session.query(MediaItem.id).filter_by(key=videokey).first() is not None
+
+    return exists
+
 
 # @app.route('/sitetor/api/v1.0/init', methods=['GET'])
 def loadPlexLibrary():
@@ -345,6 +355,9 @@ def loadPlexLibrary():
                     os._exit(1)
             
         # pi.originalTitle = video.originalTitle
+        if plexKeyExists(video.key):
+            continue
+
         pi.guid = video.guid
         pi.key = video.key
         if len(video.locations) > 0:
