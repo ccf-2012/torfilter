@@ -361,7 +361,7 @@ def loadPlexLibrary():
         pi.guid = video.guid
         pi.key = video.key
         if len(video.locations) > 0:
-            pi.location0 = video.locations[0]
+            pi.location0 = ','.join(video.locations)
             if isMediaExt(video.locations[0]):
                 pi.locationdirname = os.path.basename(
                     os.path.dirname(video.locations[0]))
