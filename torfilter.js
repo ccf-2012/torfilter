@@ -431,12 +431,12 @@ var config = [
     eleTorItemSize: "td:nth-child(6)",
     eleTorItemSeednum: "td:nth-child(7)",
     eleTorItemAdded: "td:nth-child(5) > span",
-    useTitleName: 1,
+    useTitleName: 4,
     eleIntnTag: "",
     eleCnLangTag: "",
     eleCnSubTag: "",
     eleDownLink:
-      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2)  a",
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -746,7 +746,11 @@ function getItemTitle(item) {
     let titlehtml = item.html()
     titlestr = titlehtml.substring(0, titlehtml.indexOf('<br><span'));
   }
-  return titlestr.trim();
+  else if (THISCONFIG.useTitleName == 4) {
+    let ele2 = item.parent().find("[href*='details']")
+    titlestr = ele2.attr("title");
+  }
+return titlestr.trim();
 }
 
 var onClickFilterList = (html) => {
