@@ -926,6 +926,13 @@ function _getDownloadUrlByPossibleHrefs() {
     "a[href*='https://totheglory.im/dl/']"
   ];
 
+  if (window.location.host == "pt.keepfrds.com"){
+    //frds
+    const dllink = $("input[value*='passkey']");
+    if (dllink.length){
+      return dllink.prop("value")
+    }
+  }
   for (const href of possibleHrefs) {
     const query = $(href);
     if (query.length) {
