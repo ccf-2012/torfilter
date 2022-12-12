@@ -59,8 +59,8 @@ const pter_douban = (element) => {
 };
 
 const pter_seeding = (element) => {
-  var d = $(element).find("img.progbargreen");
-  return d.length > 0;
+  // var d = $(element).find("img.progbargreen");
+  return ($(element).find("img.progbargreen").length > 0) || ($(element).find("img.progbarred").length > 0);
 };
 
 //  ====== chd
@@ -575,8 +575,13 @@ function addFilterPanel() {
         </button>
     </td>
     <td style='width: 80px; border: none;'>
+        <button type="button" id="btn-apicheckdupe" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+        查重
+        </button>
+    </td>
+    <td style='width: 80px; border: none;'>
         <button type="button" id="btn-apidownload" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-        查重下载
+        查&下
         </button>
     </td>
     <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
@@ -877,10 +882,11 @@ function onClickCopyDownloadLink(html) {
   asyncCopyLink(html);
 }
 
-var postToFilterDownloadApi = async (tordata, ele) => {
+var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
+  var apiUrl = doDownload ? "http://localhost:3006/p/api/v1.0/dupedownload" : "http://localhost:3006/p/api/v1.0/checkdupeonly"
   var resp = GM.xmlHttpRequest({
     method: "POST",
-    url: "http://localhost:3006/p/api/v1.0/dupedownload",
+    url: apiUrl,
     data: JSON.stringify(tordata),
     headers: {
       "Content-Type": "application/json",
@@ -1018,7 +1024,7 @@ function genDownloadLink(link, passKeyStr) {
   }
 }
 
-var asyncApiDownload = async (html) => {
+var asyncApiDownload = async (html, doDownload) => {
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
 
@@ -1038,7 +1044,7 @@ var asyncApiDownload = async (html) => {
           imdbid: imdbid,
           downloadlink: dllink,
         };
-        await postToFilterDownloadApi(tordata, element);
+        await postToFilterDownloadApi(tordata, doDownload, element);
         await sleep(2000);
       }
     }
@@ -1047,7 +1053,11 @@ var asyncApiDownload = async (html) => {
 };
 
 function onClickApiDownload(html) {
-  asyncApiDownload(html);
+  asyncApiDownload(html, true);
+}
+
+function onClickApiCheckDupe(html) {
+  asyncApiDownload(html, false);
 }
 
 function onClickDetailDownload(html) {
@@ -1151,6 +1161,9 @@ function addAdoptColumn(html) {
       });
       $("#btn-apidownload").click(function () {
         onClickApiDownload(document);
+      });
+      $("#btn-apicheckdupe").click(function () {
+        onClickApiCheckDupe(document);
       });
     }
   }
