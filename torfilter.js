@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         种子列表过滤与认领
+// @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.8.0
+// @version      0.9.0
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -60,7 +60,12 @@ const pter_douban = (element) => {
 
 const pter_seeding = (element) => {
   // var d = $(element).find("img.progbargreen");
-  return ($(element).find("img.progbargreen").length > 0) || ($(element).find("img.progbarred").length > 0);
+  return ($(element).find("img.progbargreen").length > 0);
+};
+
+const pter_downed = (element) => {
+  // var d = $(element).find("img.progbargreen");
+  return ($(element).find("img.progbarred").length > 0);
 };
 
 //  ====== chd
@@ -73,9 +78,16 @@ const chd_imdb = (element) => {
 
 const chd_seeding = (element) => {
   var d = $(element).find("td:nth-child(10)");
+  return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
+  // return d.text() === "100%";
+};
+
+const chd_downed = (element) => {
+  var d = $(element).find("td:nth-child(10)");
   // return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
   return d.text() === "100%";
 };
+
 
 const chd_passkey = async () => {
   let html = await $.get("usercp.php");
@@ -111,13 +123,19 @@ const ade_douban = (element) => {
   );
   return d.text();
 };
+
 const ade_seeding = (element) => {
-  var d = $(element).find("div.torrents-progress, div.torrents-progress2");
+  var d = $(element).find("div.torrents-progress");
 
   return d.length > 0 && d.css("width") != "0px";
   // return d.text() === "100%";
 };
 
+const ade_downed = (element) => {
+  var d = $(element).find("div.torrents-progress2");
+
+  return d.length > 0 && d.css("width") != "0px";
+};
 
 
 const ade_passkey = async () => {
@@ -156,7 +174,11 @@ const ob_douban = (element) => {
   return d.text();
 };
 const ob_seeding = (element) => {
-  var d = $(element).find("div.progressBar");
+  var d = $(element).find("div.doing");
+  return d.length > 0 && d.attr("title").startsWith("100");
+};
+const ob_downed = (element) => {
+  var d = $(element).find("div.out");
   return d.length > 0 && d.attr("title").startsWith("100");
 };
 
@@ -211,6 +233,11 @@ const ssd_douban = (element) => {
 
 const ssd_seeding = (element) => {
   var d = $(element).find("div.p_seeding");
+  return d.length > 0;
+};
+
+const ssd_downed = (element) => {
+  var d = $(element).find("div.p_inactive");
   return d.length > 0;
 };
 
@@ -308,9 +335,17 @@ const frds_passkey = async () => {
 };
 
 const frds_seeding = (element) => {
-  var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > div:nth-child(1)");
-  return d.length > 0;
+  // var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > div:nth-child(1)");
+  var d = $("td:nth-child(2) > table > tbody > tr > td:nth-child(1)", element)
+  return d.length > 0 && (/2s_up.gif/.exec(d.html()))
 };
+
+const frds_downed = (element) => {
+  // var d = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > div:nth-child(1)");
+  var d = $("td:nth-child(2) > table > tbody > tr > td:nth-child(1)", element)
+  return d.length > 0 && (/2s_dled.gif/.exec(d.html()))
+};
+
 
 var config = [
   {
@@ -337,6 +372,7 @@ var config = [
     funcIMDbId: pter_imdbid,
     funcDouban: pter_douban,
     funcSeeding: pter_seeding,
+    funcDownloaded: pter_downed,
     funcGetPasskey: skip_passkey,
   },
   {
@@ -364,6 +400,7 @@ var config = [
     funcIMDbId: not_supported,
     funcDouban: not_supported,
     funcSeeding: chd_seeding,
+    funcDownloaded: chd_downed,
     funcGetPasskey: chd_passkey,
   },
   {
@@ -392,6 +429,7 @@ var config = [
     funcIMDbId: ade_imdbid,
     funcDouban: ade_douban,
     funcSeeding: ade_seeding,
+    funcDownloaded: ade_downed,
     funcGetPasskey: ade_passkey,
     // eleTorDetailTable: "tr:contains('副标题'):last",
   },
@@ -419,6 +457,7 @@ var config = [
     funcIMDbId: ob_imdbid,
     funcDouban: ob_douban,
     funcSeeding: ob_seeding,
+    funcDownloaded: ob_downed,
     funcGetPasskey: ob_passkey,
   },
   {
@@ -445,6 +484,7 @@ var config = [
     funcIMDbId: ssd_imdbid,
     funcDouban: ssd_douban,
     funcSeeding: ssd_seeding,
+    funcDownloaded: ssd_downed,
     funcGetPasskey: ssd_passkey,
   },
   {
@@ -471,6 +511,7 @@ var config = [
     funcIMDbId: ttg_imdbid,
     funcDouban: not_supported,
     funcSeeding: ttg_seeding,
+    funcDownloaded: not_supported,
     funcGetPasskey: ttg_passkey,
   },  
   {
@@ -497,6 +538,7 @@ var config = [
     funcIMDbId: not_supported,
     funcDouban: not_supported,
     funcSeeding: frds_seeding,
+    funcDownloaded: frds_downed,
     funcGetPasskey: frds_passkey,
   },
   {
@@ -523,6 +565,7 @@ var config = [
     funcIMDbId: not_supported,
     funcDouban: not_supported,
     funcSeeding: beitai_seeding,
+    funcDownloaded: not_supported,
     funcGetPasskey: beitai_passkey,
   },  
 ];
@@ -536,57 +579,86 @@ function addFilterPanel() {
   }
 
   var donwnloadPanel = `
-    <table align='center'> <tr>
-    <td style='width: 65px; border: none;'>
-    <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
-    </td>
-    <td style='width: 65px; border: none;'>
-    <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
-    </td>
-    <td style='width: 65px; border: none;'>
-    <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
-    </td>
-    <td style='width: 170px; border: none;'>
-    <div>标题不含 <input style='width: 100px;' id='titleregex' value="" />
-    </div>
-    </td>    
-    <td style='width: 180px; border: none;'>
-    <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
-    </div>
-    </td>    
-
-    <td style='width: 120px; border: none;'>
-    <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
-    </div>
-    </td>    
-
-    <td style='width: 130px; border: none;'>
-    <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
-    </div>
-    </td>    
-    <td style='width: 60px; border: none;'>
-        <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-        过滤
-        </button>
-    </td>
-    <td style='width: 80px; border: none;'>
-        <button type="button" id="btn-copydllink" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-        拷贝链接
-        </button>
-    </td>
-    <td style='width: 80px; border: none;'>
-        <button type="button" id="btn-apicheckdupe" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-        查重
-        </button>
-    </td>
-    <td style='width: 80px; border: none;'>
-        <button type="button" id="btn-apidownload" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-        查&下
-        </button>
-    </td>
-    <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
-    </tr>
-    </table>
+  <table align='center'> <tr>
+      <td style='width: 90px; border: none;'>
+      <table>  
+        <tr>
+          <td style='width: 85px; border: none;'>
+          <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
+          </td>
+        </tr>
+        <tr>
+          <td style='width: 85px; border: none;'>
+            <input type="checkbox" id="downloaded" name="downloaded" value="uncheck"><label for="downloaded">未曾下 </label>
+          </td>
+        </tr>
+      </table>  
+      </td>
+      <td style='width: 90px; border: none;'>
+      <table>  
+      <tr>
+        <td style='width: 85px; border: none;'>
+          <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
+        </td>
+        </tr>
+        <tr>
+        <td style='width: 85px; border: none;'>
+          <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
+        </td>
+        </tr>
+      </table>  
+      </td>
+      <td style='width: 260px; border: none;'>
+        <table>  
+          <tr>
+          <td style=' border: none;'>
+          <div>标题不含 <input style='width: 180px;' id='titleregex' value="" />
+          </div>
+          </td>    
+        </tr><tr>
+          <td style='border: none;'>
+          <div>描述不含 <input style='width: 180px;' id='titledescregex' value="" />
+          </div>
+          </td>
+        </tr>
+      </table>
+      </td>    
+  
+      <td style='width: 120px; border: none;'>
+      <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
+      </div>
+      </td>    
+  
+      <td style='width: 130px; border: none;'>
+      <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
+      </div>
+      </td>    
+      <td style='width: 60px; border: none;'>
+          <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+          过滤
+          </button>
+      </td>
+      <td style='width: 85px; border: none;'>
+          <button type="button" id="btn-copydllink" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+          拷贝链接
+          </button>
+      </td>
+      <td style='width: 70px; border: none;'>
+          <button type="button" id="btn-apicheckdupe" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+          仅查重
+          </button>
+      </td>
+      <td style='width: 70px; border: none;'>
+          <button type="button" id="btn-apidownload" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
+          查&下
+          </button>
+      </td>
+      <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
+      </tr>
+      </table>
+  
+  </body>
+  </html>
 `;
   torTable.before(donwnloadPanel);
 
@@ -686,6 +758,8 @@ function saveParamToCookie() {
     $("#titledescregex").val() +
     "&seeding=" +
     $("#seeding").is(":checked") +
+    "&downloaded=" +
+    $("#downloaded").is(":checked") +
     "&chnsub=" +
     $("#chnsub").is(":checked") +
     "&nochnlang=" +
@@ -722,6 +796,9 @@ function fillParam(filterParam) {
       }
       if (m[1] == "seeding") {
         $("#seeding").prop("checked", m[2] == "true");
+      }
+      if (m[1] == "downloaded") {
+        $("#downloaded").prop("checked", m[2] == "true");
       }
       if (m[1] == "chnsub") {
         $("#chnsub").prop("checked", m[2] == "true");
@@ -830,6 +907,9 @@ var onClickFilterList = (html) => {
     //     keepShow = false;
     // }
     if ($("#seeding").is(":checked") && THISCONFIG.funcSeeding(element)) {
+      keepShow = false;
+    }
+    if ($("#downloaded").is(":checked") && THISCONFIG.funcDownloaded(element)) {
       keepShow = false;
     }
     if (
@@ -949,7 +1029,7 @@ function _getDownloadUrlByPossibleHrefs() {
 }
 
 function getIMDb() {
-  let bodytext = $("body").text();
+  let bodytext = $("body").html();
   let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( bodytext );
   if (datas && datas.length > 1) {
     return datas[1];
