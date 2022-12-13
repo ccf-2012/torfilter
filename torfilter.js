@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.0
+// @version      0.9.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -832,7 +832,7 @@ function getItemTitle(item) {
     let ele2 = item.parent().find("[href*='details']")
     titlestr = ele2.attr("title");
   }
-return titlestr.trim();
+  return titlestr.trim();
 }
 
 var onClickFilterList = (html) => {
@@ -986,7 +986,7 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
         // console.log("TMDbNotFound: " + tordata.torname);
       } else {
         $(ele).css("background-color", "red");
-        console.log("Error: " + response);
+        console.log(response);
       }
     },
     onerror: function (reponse) {
@@ -1104,7 +1104,24 @@ function genDownloadLink(link, passKeyStr) {
   }
 }
 
+var getDetailPageIMDb = async (downloadLink) => {
+  let m = downloadLink.match(/download\.php\?id=(\d+)/);
+  if (!m) {
+    return "";
+  }
+  var torrentId = m[1];
+
+  let detailhtml = await $.get("/details.php?id="+torrentId);
+  let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( detailhtml );
+  if (datas && datas.length > 1) {
+    return datas[1];
+  }
+  return "";
+}
+
+var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
+  let dupeChecked = (DUPECHECKED || $("#process-log").text() == '查重完成')
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
 
@@ -1113,23 +1130,44 @@ var asyncApiDownload = async (html, doDownload) => {
     if ($(torlist[index]).is(":visible")) {
       let element = torlist[index];
       let item = $(element).find(THISCONFIG.eleTorItem);
+      if (item.length == 0) { continue}
+      // refer to Line 978:
+      // } else if (response.status == 201) {
+      //   $(ele).css("background-color", "darkseagreen");
+      if (doDownload && dupeChecked && $(element).css('background-color') != 'rgb(143, 188, 143)') {
+        continue;
+      }
+
       let titlestr = getItemTitle(item);
       let imdbid = THISCONFIG.funcIMDbId(element);
       let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
 
       if (hrefele.length > 0) {
         let dllink = genDownloadLink(hrefele.prop("href"), passKeyStr);
+        // check detal page imdb only when doDownload
+        if (doDownload && !imdbid ) {
+          imdbid = await getDetailPageIMDb(dllink);
+          console.log(titlestr, imdbid);  
+        }
         var tordata = {
           torname: titlestr,
           imdbid: imdbid,
           downloadlink: dllink,
         };
         await postToFilterDownloadApi(tordata, doDownload, element);
-        await sleep(2000);
+        if (doDownload){
+          await sleep(2000);
+        }
       }
     }
   }
-  $("#process-log").text("查重下载已提交");
+  if (doDownload){
+    $("#process-log").text("查重下载已提交");
+  }
+  else {
+    $("#process-log").text("查重完成");
+    DUPECHECKED = true;
+  }
 };
 
 function onClickApiDownload(html) {
