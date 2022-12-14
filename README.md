@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2022.12.14: hdc
 * 2022.12.13: 对在列表页没有IMDb信息的站点，取详情页获取IMDb信息再下载
 * 2022.12.12: frds,beitai等站点支持；未作种，未曾下，列表页仅查重，查&下
 * 2022.10.12: 支持Emby，支持pt站上种子详情页上查重和下载
@@ -36,7 +37,7 @@
 ## 功能
 油猴脚本，在种子列表页中:
 1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-    * 当前支持pter, chd, ade, ob, ssd, frds, beitai, ttg
+    * 当前支持pter, chd, ade, ob, ssd, frds, beitai, ttg, hdc
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
 3. since 2022.10.9，配合 dupapi.py 实现查重下载入库，请查看 https://github.com/ccf-2012/torfilter
@@ -58,7 +59,7 @@
 
 ### 列表页的查重与下载
 * “仅查重” 与 “查&下” 都是通过后台dupapi进行;
-* ob, cmct, aud, pter, ttg等站列表页有IMDb标识，torfilter会用IMDb来查重并在推送qbit下载时添加标签(tag)
+* ob, ssd, aud, pter, ttg等站列表页有IMDb标识，torfilter会用IMDb来查重并在推送qbit下载时添加标签(tag)
 * frds, chd, beitai等站在列表页没有IMDb信息，在种子详情页可能会获取到，则：
   - 在查重时，torfilter会使用种子名称提交查重，后台dupapi会以torcp解析种子名称后查找TMDb再进行查重。这种依赖种子名称查TMDb有可能失误，所以查重结果也有可能不正确；
   - 在下载时，torfilter将去获取种子详情页，并提取IMDb信息，之后再提交后台dupapi进行下载，这样也会在qbit中对种子加上标签；
