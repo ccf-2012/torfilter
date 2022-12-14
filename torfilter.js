@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.3
+// @version      0.9.4
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -30,6 +30,8 @@
 // @match        https://pt.keepfrds.com/details.php*
 // @match        https://hdchina.org/torrents.php*
 // @match        https://hdchina.org/details.php*
+// @match        https://hdsky.me/torrents.php*
+// @match        https://hdsky.me/details.php*
 
 // ==/UserScript==
 
@@ -367,6 +369,55 @@ const hdc_downed = (element) => {
 };
 
 
+//  ====== hds
+const sky_imdbval = (element) => {
+  var t = $(element).find(
+    "td > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(2)"
+  );
+  return t.text();
+};
+const sky_imdbid = (element) => {
+  var t = $(element)
+    .find(
+      "td > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(2)"
+    )
+    .attr("href");
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+
+};
+
+const sky_douban = (element) => {
+  var d = $(element).find(
+    "td > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(1)"
+  );
+  return d.text();
+};
+
+const sky_seeding = (element) => {
+  var d = $(element).find("div.progressseeding");
+  return d && d.length > 0;
+};
+
+const sky_downed = (element) => {
+  var d = $(element).find("div.progressfinished");
+
+  return d && d.length > 0 ;
+};
+
+const sky_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
+
+
 var config = [
   {
     host: "pterclub.com",
@@ -614,6 +665,33 @@ var config = [
     funcSeeding: hdc_seeding,
     funcDownloaded: hdc_downed,
     funcGetPasskey: not_supported,
+  },  
+  {
+    host: "hdsky.me",
+    eleTorTable: "#outer > table > tbody > tr > td > table",
+    eleCurPage: "#outer > table > tbody > tr > td > form:nth-child(8) > p > font",
+    eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
+    eleTorItem: "td > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6) > b > a",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-zz",
+    eleDownLink:
+      "td > table > tbody > tr > td:nth-child(1) > a",
+    eleCatImg: "td.t_cat > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: sky_imdbval,
+    funcIMDbId: sky_imdbid,
+    funcDouban: sky_douban,
+    funcSeeding: sky_seeding,
+    funcDownloaded: sky_downed,
+    funcGetPasskey: sky_passkey,
   },  
 ];
 
@@ -995,9 +1073,8 @@ var asyncCopyLink = async (html) => {
   var resulttext = "";
   for (let index = 1; index < torlist.length; ++index) {
     if ($(torlist[index]).is(":visible")) {
-      let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
-      if (hrefele.length > 0) {
-        let dllink = genDownloadLink(hrefele.prop("href"), passKeyStr);
+      let dllink = getDownloadLink(torlist[index], passKeyStr);
+      if (dllink) {
         resulttext += dllink + "\n";
       }
     }
@@ -1024,7 +1101,12 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
         $(ele).css("background-color", "lightgray");
         // console.log("Dupe: " + tordata.torname);
       } else if (response.status == 201) {
-        $(ele).css("background-color", "darkseagreen");
+        if (doDownload){
+          $(ele).css("background-color", "darkseagreen");
+        }
+        else {
+          $(ele).css("background-color", "LightBlue"); // CadetBlue, CornflowerBlue DodgerBlue DarkTurquoise
+        }
         // console.log("Add download: " + tordata.torname);
       } else if (response.status == 205) {
         $(ele).css("background-color", "darkturquoise");
@@ -1142,15 +1224,6 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   }
 };
 
-function genDownloadLink(link, passKeyStr) {
-  if (THISCONFIG.host == "totheglory.im")
-  {
-    return link.replace(/\d+$/, "") + passKeyStr;
-  }
-  else{
-    return link + passKeyStr;
-  }
-}
 
 var getDetailPageIMDb = async (downloadLink) => {
   let m = downloadLink.match(/download\.php\?id=(\d+)/);
@@ -1167,6 +1240,27 @@ var getDetailPageIMDb = async (downloadLink) => {
   return "";
 }
 
+
+function linkPasskey(link, passKeyStr) {
+  if (THISCONFIG.host == "totheglory.im")
+  {
+    return link.replace(/\d+$/, "") + passKeyStr;
+  }
+  else{
+    return link + passKeyStr;
+  }
+}
+
+
+function getDownloadLink(element, passKeyStr){
+  let hrefele = $(element).find(THISCONFIG.eleDownLink);
+  if (hrefele.length > 0) {
+    let dllink = linkPasskey(hrefele.prop("href"), passKeyStr);
+    return dllink
+  }
+  return ""
+}
+
 var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
   let dupeChecked = DUPECHECKED 
@@ -1181,17 +1275,16 @@ var asyncApiDownload = async (html, doDownload) => {
       if (item.length == 0) { continue}
       // refer to Line 978:
       // } else if (response.status == 201) {
-      //   $(ele).css("background-color", "darkseagreen");
-      if (doDownload && dupeChecked && $(element).css('background-color') != 'rgb(143, 188, 143)') {
+      //   $(ele).css("background-color", "darkseagreen"); 'rgb(143, 188, 143)'
+       if (doDownload && dupeChecked && $(element).css('background-color') != 'rgb(173, 216, 230)') {
         continue;
       }
 
       let titlestr = getItemTitle(item);
       let imdbid = THISCONFIG.funcIMDbId(element);
-      let hrefele = $(torlist[index]).find(THISCONFIG.eleDownLink);
+      let dllink = getDownloadLink(torlist[index], passKeyStr);
 
-      if (hrefele.length > 0) {
-        let dllink = genDownloadLink(hrefele.prop("href"), passKeyStr);
+      if (dllink) {
         // check detal page imdb only when doDownload
         if (doDownload && !imdbid ) {
           imdbid = await getDetailPageIMDb(dllink);
