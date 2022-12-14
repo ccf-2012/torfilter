@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.4
+// @version      0.9.5
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -246,12 +246,13 @@ const ssd_downed = (element) => {
 };
 
 const ssd_passkey = async () => {
-  let html = await $.get("usercp.php");
-  let passkeyRow = $(html).find('tr:contains("密钥"):last');
-  if (passkeyRow.length > 0) {
-    var key = passkeyRow.find("td:last").text();
-    return "&passkey=" + key.trim() + "&https=1";
-  }
+  // site changed 2022.12
+  // let html = await $.get("usercp.php");
+  // let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  // if (passkeyRow.length > 0) {
+  //   var key = passkeyRow.find("td:last").text();
+  //   return "&passkey=" + key.trim() + "&https=1";
+  // }
   return "";
 };
 
@@ -408,12 +409,12 @@ const sky_downed = (element) => {
 };
 
 const sky_passkey = async () => {
-  let html = await $.get("usercp.php");
-  let passkeyRow = $(html).find('tr:contains("密钥"):last');
-  if (passkeyRow.length > 0) {
-    var key = passkeyRow.find("td:last").text();
-    return "&passkey=" + key.trim();
-  }
+  // let html = await $.get("usercp.php");
+  // let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  // if (passkeyRow.length > 0) {
+  //   var key = passkeyRow.find("td:last").text();
+  //   return "&passkey=" + key.trim();
+  // }
   return "";
 };
 
@@ -1130,7 +1131,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function _getDownloadUrlByPossibleHrefs() {
+function _getDownloadUrlByPossibleHrefs(pagehtml) {
   const possibleHrefs = [
     // misc
     "a[href*='passkey']",
@@ -1144,13 +1145,13 @@ function _getDownloadUrlByPossibleHrefs() {
 
   if (window.location.host == "pt.keepfrds.com"){
     //frds
-    const dllink = $("input[value*='passkey']");
+    const dllink = $("input[value*='passkey']", pagehtml);
     if (dllink.length){
       return dllink.prop("value")
     }
   }
   for (const href of possibleHrefs) {
-    const query = $(href);
+    const query = $(href, pagehtml);
     if (query.length) {
       return query.prop("href");
     }
@@ -1208,7 +1209,7 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   // TODO:
   let titlestr = getDetailTitle();
 
-  let dllink = _getDownloadUrlByPossibleHrefs();
+  let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getIMDb();
     var tordata = {
@@ -1225,19 +1226,23 @@ var asyncDetailApiDownload = async (html, forcedl) => {
 };
 
 
-var getDetailPageIMDb = async (downloadLink) => {
-  let m = downloadLink.match(/download\.php\?id=(\d+)/);
+var getDetailPageIMDbAndDlink = async (downloadLink) => {
+  let m = downloadLink.match(/\?id=(\d+)/);
   if (!m) {
-    return "";
+    return ["", ""];
   }
   var torrentId = m[1];
 
   let detailhtml = await $.get("/details.php?id="+torrentId);
   let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( detailhtml );
-  if (datas && datas.length > 1) {
-    return datas[1];
+  let dllink = _getDownloadUrlByPossibleHrefs(detailhtml);
+  if (!dllink) {
+    dllink = downloadLink;
   }
-  return "";
+  if (datas && datas.length > 1) {
+    return [datas[1], dllink];
+  }
+  return ["", ""];
 }
 
 
@@ -1255,7 +1260,21 @@ function linkPasskey(link, passKeyStr) {
 function getDownloadLink(element, passKeyStr){
   let hrefele = $(element).find(THISCONFIG.eleDownLink);
   if (hrefele.length > 0) {
-    let dllink = linkPasskey(hrefele.prop("href"), passKeyStr);
+    let url = hrefele.prop("href");
+    // let dllink = "";
+    // if (THISCONFIG.host == "hdsky.me"){
+    //   // 此时是无用的链接      
+    //   let m = url.match(/id=(\d+)/);
+    //   if (m) {
+    //     url = url.replace(/details\.php\?id=\d+&hit=1/, 'download.php?id='+m[1])
+    //     dllink = linkPasskey(url, passKeyStr);
+    //   }
+    // }
+    // else {
+    //   dllink = linkPasskey(url, passKeyStr);
+    // }
+    let dllink = linkPasskey(url, passKeyStr);
+ 
     return dllink
   }
   return ""
@@ -1286,8 +1305,11 @@ var asyncApiDownload = async (html, doDownload) => {
 
       if (dllink) {
         // check detal page imdb only when doDownload
-        if (doDownload && !imdbid ) {
-          imdbid = await getDetailPageIMDb(dllink);
+        // hdsky exception
+        if (doDownload && (!imdbid || (THISCONFIG.host == "hdsky.me"))) {
+          res = await getDetailPageIMDbAndDlink(dllink);
+          imdbid = res[0];
+          dllink = res[1];
           console.log(titlestr, imdbid);
         }
         var tordata = {
@@ -1344,7 +1366,7 @@ var asyncDetailCheckDupe = async (html) => {
   // dllink = $("#torrent_dl_url > a").href()
   // let titlestr = $("#top").text();
   let titlestr = getDetailTitle();
-  let dllink = _getDownloadUrlByPossibleHrefs();
+  let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getIMDb();
     var tordata = {
