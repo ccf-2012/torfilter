@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.1
+// @version      0.9.2
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -513,7 +513,7 @@ var config = [
     funcSeeding: ttg_seeding,
     funcDownloaded: not_supported,
     funcGetPasskey: ttg_passkey,
-  },  
+  },
   {
     host: "pt.keepfrds.com",
     eleTorTable: "#form_torrent > table",
@@ -567,7 +567,7 @@ var config = [
     funcSeeding: beitai_seeding,
     funcDownloaded: not_supported,
     funcGetPasskey: beitai_passkey,
-  },  
+  },
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
@@ -580,59 +580,60 @@ function addFilterPanel() {
 
   var donwnloadPanel = `
   <table align='center'> <tr>
-      <td style='width: 90px; border: none;'>
-      <table>  
+    <td style='width: 70px; border: none;'>
+      <table>
         <tr>
-          <td style='width: 85px; border: none;'>
+          <td style='width: 65px; border: none;'>
+            <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
+          </td>
+          </tr>
+          <tr>
+          <td style='width: 65px; border: none;'>
+            <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td style='width: 70px; border: none;'>
+      <table>
+        <tr>
+          <td style='width: 65px; border: none;'>
           <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
           </td>
         </tr>
         <tr>
-          <td style='width: 85px; border: none;'>
+          <td style='width: 65px; border: none;'>
             <input type="checkbox" id="downloaded" name="downloaded" value="uncheck"><label for="downloaded">未曾下 </label>
           </td>
         </tr>
-      </table>  
+      </table>
       </td>
-      <td style='width: 90px; border: none;'>
-      <table>  
-      <tr>
-        <td style='width: 85px; border: none;'>
-          <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
-        </td>
-        </tr>
-        <tr>
-        <td style='width: 85px; border: none;'>
-          <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
-        </td>
-        </tr>
-      </table>  
-      </td>
-      <td style='width: 260px; border: none;'>
-        <table>  
+
+      <td style='width: 200px; border: none;'>
+        <table>
           <tr>
           <td style=' border: none;'>
-          <div>标题不含 <input style='width: 180px;' id='titleregex' value="" />
+          <div>标题不含 <input style='width: 130px;' id='titleregex' value="" />
           </div>
-          </td>    
+          </td>
         </tr><tr>
           <td style='border: none;'>
-          <div>描述不含 <input style='width: 180px;' id='titledescregex' value="" />
+          <div>描述不含 <input style='width: 130px;' id='titledescregex' value="" />
           </div>
           </td>
         </tr>
       </table>
-      </td>    
-  
+      </td>
+
       <td style='width: 120px; border: none;'>
       <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
       </div>
-      </td>    
-  
-      <td style='width: 130px; border: none;'>
+      </td>
+
+      <td style='width: 120px; border: none;'>
       <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
       </div>
-      </td>    
+      </td>
       <td style='width: 60px; border: none;'>
           <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
           过滤
@@ -653,10 +654,10 @@ function addFilterPanel() {
           查&下
           </button>
       </td>
-      <td style='width: 120px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
+      <td style='width: 90px; border: none;'> <div id="process-log" style="margin-left: 5px;"></div> </td>
       </tr>
       </table>
-  
+
   </body>
   </html>
 `;
@@ -697,7 +698,7 @@ function addDetailPagePanel() {
     <tr>
     <td style=' border: none;'> <div id="detail-log" style="margin-top: 10px;justify-content: center; align-items: center;"> </div> </td>
     </tr>
-    </table>    
+    </table>
   </div>
 `
 ).appendTo("body");
@@ -1075,7 +1076,7 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
 var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
-  // TODO: 
+  // TODO:
   let titlestr = getDetailTitle();
 
   let dllink = _getDownloadUrlByPossibleHrefs();
@@ -1121,7 +1122,7 @@ var getDetailPageIMDb = async (downloadLink) => {
 
 var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
-  let dupeChecked = (DUPECHECKED || $("#process-log").text() == '查重完成')
+  let dupeChecked = DUPECHECKED 
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
 
@@ -1147,7 +1148,7 @@ var asyncApiDownload = async (html, doDownload) => {
         // check detal page imdb only when doDownload
         if (doDownload && !imdbid ) {
           imdbid = await getDetailPageIMDb(dllink);
-          console.log(titlestr, imdbid);  
+          console.log(titlestr, imdbid);
         }
         var tordata = {
           torname: titlestr,
@@ -1158,6 +1159,9 @@ var asyncApiDownload = async (html, doDownload) => {
         if (doDownload){
           await sleep(2000);
         }
+        else {
+          await sleep(200);
+        }
       }
     }
   }
@@ -1165,7 +1169,7 @@ var asyncApiDownload = async (html, doDownload) => {
     $("#process-log").text("查重下载已提交");
   }
   else {
-    $("#process-log").text("查重完成");
+    $("#process-log").text("查重已提交");
     DUPECHECKED = true;
   }
 };
@@ -1255,7 +1259,7 @@ function addAdoptColumn(html) {
 (function () {
   "use strict";
   if (THISCONFIG) {
-    if (window.location.href.match(/details.php/) || 
+    if (window.location.href.match(/details.php/) ||
         window.location.href.match(/totheglory.im\/t/) ) {
       addDetailPagePanel();
       $("#btn-detail-checkdupe").click(function () {
