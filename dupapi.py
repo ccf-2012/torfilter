@@ -86,7 +86,7 @@ class MediaItem(db.Model):
 
 
 def validDownloadlink(downlink):
-    keystr = ['passkey', 'downhash', 'totheglory.im/dl/']
+    keystr = ['passkey', 'downhash', 'totheglory.im/dl/', 'download.php?hash=']
     return any(x in downlink for x in keystr)
 
 
