@@ -28,6 +28,8 @@
 // @match        https://totheglory.im/t/*
 // @match        https://pt.keepfrds.com/torrents.php*
 // @match        https://pt.keepfrds.com/details.php*
+// @match        https://hdchina.org/torrents.php*
+// @match        https://hdchina.org/details.php*
 
 // ==/UserScript==
 
@@ -347,6 +349,24 @@ const frds_downed = (element) => {
 };
 
 
+//  ====== hdc
+const hdc_imdbval = (element) => {
+  var t = $(element).find(
+    "td.t_name > table > tbody > tr > td.act > a.imdb"
+  );
+  return t.text();
+};
+
+const hdc_seeding = (element) => {
+  var d = $(element).find("div.progress_seeding");
+  return d.length > 0;
+};
+const hdc_downed = (element) => {
+  var d = $(element).find("div.progress_completed");
+  return d.length > 0;
+};
+
+
 var config = [
   {
     host: "pterclub.com",
@@ -567,6 +587,33 @@ var config = [
     funcSeeding: beitai_seeding,
     funcDownloaded: not_supported,
     funcGetPasskey: beitai_passkey,
+  }, 
+  {
+    host: "hdchina.org",
+    eleTorTable: "#form_torrent > table",
+    eleCurPage: "#site_content > div > div.pagenav_part > div > ul > li.active",
+    eleTorList: "#form_torrent > table > tbody > tr",
+    eleTorItem: "td.t_name > table > tbody > tr > td:nth-child(2) > h3 > a",
+    eleTorItemDesc: "td.t_name > table > tbody > tr > td:nth-child(2) > h4",
+    eleTorItemSize: "td.t_size",
+    eleTorItemSeednum: "td.t_torrents > a",
+    eleTorItemAdded: "td.t_time > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-zz",
+    eleDownLink:
+      "td.t_name > table > tbody > tr > td.act > a:nth-child(3)",
+    eleCatImg: "td.t_cat > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: hdc_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: hdc_seeding,
+    funcDownloaded: hdc_downed,
+    funcGetPasskey: not_supported,
   },  
 ];
 
