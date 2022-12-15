@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.6
+// @version      0.9.7
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -654,7 +654,7 @@ var config = [
     eleIntnTag: "div.tag-gf",
     eleCnLangTag: "div.tag-gy",
     eleCnSubTag: "div.tag-zz",
-    eleDownLink: "a[href*='hash']",
+    eleDownLink: "td.t_name > table > tbody > tr > td:nth-child(2) > h3 > a",
     eleCatImg: "td.t_cat > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -1239,7 +1239,7 @@ var asyncDetailApiDownload = async (html, forcedl) => {
 
 
 var getDetailPageIMDbAndDlink = async (downloadLink) => {
-  let m = downloadLink.match(/download.php\?id=(\d+)/);
+  let m = downloadLink.match(/\?id=(\d+)/);
   if (!m) {
     return ["", downloadLink];
   }
@@ -1317,8 +1317,8 @@ var asyncApiDownload = async (html, doDownload) => {
         // check detal page imdb only when doDownload
         // hdsky exception: need fetch detail page
         // hdchina exception: donot fetch detail page
-        if (doDownload && ((!imdbid && (THISCONFIG.host != "hdchina.org")) || (THISCONFIG.host == "hdsky.me"))) {
-          res = await getDetailPageIMDbAndDlink(dllink);
+        if (doDownload && (!imdbid  || THISCONFIG.host == "hdsky.me")) {
+          let res = await getDetailPageIMDbAndDlink(dllink);
           imdbid = res[0];
           dllink = res[1];
           console.log(titlestr, imdbid);
