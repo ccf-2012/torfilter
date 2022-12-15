@@ -125,7 +125,7 @@ def checkDupAddTor():
             # print("Download: " + request.json['torname'] + "  "+request.json['downloadlink'])
             if 'downloadlink' in request.json:
                 if not validDownloadlink(request.json['downloadlink']):
-                    print("Not valid torrent downlink: " + request.json['torname'])
+                    print("Not valid torrent downlink: %s ( %s) " % (request.json['torname'], request.json['downloadlink']))
                     return jsonify({'no download link': True}), 205
 
                 if not CONFIG.dryrun:

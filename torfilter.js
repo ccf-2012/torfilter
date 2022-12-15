@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.5
+// @version      0.9.6
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -654,8 +654,7 @@ var config = [
     eleIntnTag: "div.tag-gf",
     eleCnLangTag: "div.tag-gy",
     eleCnSubTag: "div.tag-zz",
-    eleDownLink:
-      "td.t_name > table > tbody > tr > td.act > a:nth-child(3)",
+    eleDownLink: "a[href*='hash']",
     eleCatImg: "td.t_cat > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -1088,6 +1087,8 @@ function onClickCopyDownloadLink(html) {
   asyncCopyLink(html);
 }
 
+
+
 var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
   var apiUrl = doDownload ? "http://localhost:3006/p/api/v1.0/dupedownload" : "http://localhost:3006/p/api/v1.0/checkdupeonly"
   var resp = GM.xmlHttpRequest({
@@ -1159,6 +1160,17 @@ function _getDownloadUrlByPossibleHrefs(pagehtml) {
   return null;
 }
 
+
+function getHDCuid() {
+  let bodytext = $("body").html();
+  let datas = /userdetails\.php\?id=(\d+)/.exec( bodytext );
+  if (datas && datas.length > 1) {
+    return datas[1];
+  }
+  return "";
+}
+
+
 function getIMDb() {
   let bodytext = $("body").html();
   let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( bodytext );
@@ -1227,9 +1239,9 @@ var asyncDetailApiDownload = async (html, forcedl) => {
 
 
 var getDetailPageIMDbAndDlink = async (downloadLink) => {
-  let m = downloadLink.match(/\?id=(\d+)/);
+  let m = downloadLink.match(/download.php\?id=(\d+)/);
   if (!m) {
-    return ["", ""];
+    return ["", downloadLink];
   }
   var torrentId = m[1];
 
@@ -1242,7 +1254,9 @@ var getDetailPageIMDbAndDlink = async (downloadLink) => {
   if (datas && datas.length > 1) {
     return [datas[1], dllink];
   }
-  return ["", ""];
+  else {
+    return ["", dllink];
+  }
 }
 
 
@@ -1261,19 +1275,15 @@ function getDownloadLink(element, passKeyStr){
   let hrefele = $(element).find(THISCONFIG.eleDownLink);
   if (hrefele.length > 0) {
     let url = hrefele.prop("href");
-    // let dllink = "";
-    // if (THISCONFIG.host == "hdsky.me"){
-    //   // 此时是无用的链接      
-    //   let m = url.match(/id=(\d+)/);
-    //   if (m) {
-    //     url = url.replace(/details\.php\?id=\d+&hit=1/, 'download.php?id='+m[1])
-    //     dllink = linkPasskey(url, passKeyStr);
-    //   }
-    // }
-    // else {
-    //   dllink = linkPasskey(url, passKeyStr);
-    // }
-    let dllink = linkPasskey(url, passKeyStr);
+    let dllink = "";
+    if (THISCONFIG.host == "hdchina.org"){
+      let uidstr = getHDCuid();
+      dllink = linkPasskey(url, passKeyStr) + "&uid=" + uidstr;
+    }
+    else {
+      dllink = linkPasskey(url, passKeyStr);
+    }
+    // let dllink = linkPasskey(url, passKeyStr);
  
     return dllink
   }
@@ -1305,8 +1315,9 @@ var asyncApiDownload = async (html, doDownload) => {
 
       if (dllink) {
         // check detal page imdb only when doDownload
-        // hdsky exception
-        if (doDownload && (!imdbid || (THISCONFIG.host == "hdsky.me"))) {
+        // hdsky exception: need fetch detail page
+        // hdchina exception: donot fetch detail page
+        if (doDownload && ((!imdbid && (THISCONFIG.host != "hdchina.org")) || (THISCONFIG.host == "hdsky.me"))) {
           res = await getDetailPageIMDbAndDlink(dllink);
           imdbid = res[0];
           dllink = res[1];
