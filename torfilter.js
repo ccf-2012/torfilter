@@ -89,7 +89,7 @@ const chd_seeding = (element) => {
 const chd_downed = (element) => {
   var d = $(element).find("td:nth-child(10)");
   // return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
-  return d.text() === "100%";
+  return d.text() != "--";
 };
 
 
@@ -361,8 +361,9 @@ const hdc_imdbval = (element) => {
 };
 
 const hdc_seeding = (element) => {
-  var d = $(element).find("div.progress_seeding");
-  return d.length > 0;
+  var s = $(element).find("div.progress_seeding");
+  var d = $(element).find("div.progressarea");
+  return s.length > 0 || d.length > 0;
 };
 const hdc_downed = (element) => {
   var d = $(element).find("div.progress_completed");
@@ -398,8 +399,9 @@ const sky_douban = (element) => {
 };
 
 const sky_seeding = (element) => {
-  var d = $(element).find("div.progressseeding");
-  return d && d.length > 0;
+  var s = $(element).find("div.progressseeding");
+  var d = $(element).find("div.progressdownloading");
+  return s.length > 0 || d.length > 0;
 };
 
 const sky_downed = (element) => {
@@ -1087,10 +1089,15 @@ function onClickCopyDownloadLink(html) {
   asyncCopyLink(html);
 }
 
-
+var SUM_SIZE;
 
 var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
   var apiUrl = doDownload ? "http://localhost:3006/p/api/v1.0/dupedownload" : "http://localhost:3006/p/api/v1.0/checkdupeonly"
+  let sizestr = $(ele).find(THISCONFIG.eleTorItemSize).text().trim();
+  let torsize = 0;
+  if (sizestr) {
+    torsize = sizeStrToGB(sizestr);
+  }
   var resp = GM.xmlHttpRequest({
     method: "POST",
     url: apiUrl,
@@ -1103,6 +1110,9 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
         $(ele).css("background-color", "lightgray");
         // console.log("Dupe: " + tordata.torname);
       } else if (response.status == 201) {
+        let p = doDownload ? "提交下载 共 " : "查重 共"
+        SUM_SIZE += (parseInt(torsize) || 0);
+        $("#process-log").text(p + SUM_SIZE+" GB");
         if (doDownload){
           $(ele).css("background-color", "darkseagreen");
         }
@@ -1295,12 +1305,15 @@ var asyncApiDownload = async (html, doDownload) => {
   let dupeChecked = DUPECHECKED 
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
-
+  SUM_SIZE = 0;
   let torlist = $(html).find(THISCONFIG.eleTorList);
   for (let index = 1; index < torlist.length; ++index) {
     if ($(torlist[index]).is(":visible")) {
       let element = torlist[index];
       let item = $(element).find(THISCONFIG.eleTorItem);
+
+      let seednum = $(element).find(THISCONFIG.eleTorItemSeednum).text().trim();
+      
       if (item.length == 0) { continue}
       // refer to Line 978:
       // } else if (response.status == 201) {
@@ -1342,7 +1355,7 @@ var asyncApiDownload = async (html, doDownload) => {
     $("#process-log").text("查重下载已提交");
   }
   else {
-    $("#process-log").text("查重已提交");
+    // $("#process-log").text("查重已提交");
     DUPECHECKED = true;
   }
 };
