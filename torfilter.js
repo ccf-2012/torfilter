@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.7
+// @version      0.9.8
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -267,11 +267,7 @@ const ssd_detailTable = (html) => {
 //  ====== ttg
 const ttg_imdbval = (element) => {
   var t = $(element).find("td:nth-child(2) > div.name_right > span.imdb_rate > a");
-  let imdb = "";
-  if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")) {
-    imdb = t.text();
-  }
-  return imdb;
+  return t.text();
 };
 
 const ttg_imdbid = (element) => {
@@ -1110,7 +1106,7 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
         $(ele).css("background-color", "lightgray");
         // console.log("Dupe: " + tordata.torname);
       } else if (response.status == 201) {
-        let p = doDownload ? "提交下载 共 " : "查重 共"
+        let p = doDownload ? "下载 " : "无重 "
         SUM_SIZE += (parseInt(torsize) || 0);
         $("#process-log").text(p + SUM_SIZE+" GB");
         if (doDownload){
@@ -1312,7 +1308,7 @@ var asyncApiDownload = async (html, doDownload) => {
       let element = torlist[index];
       let item = $(element).find(THISCONFIG.eleTorItem);
 
-      let seednum = $(element).find(THISCONFIG.eleTorItemSeednum).text().trim();
+      let seednum = parseInt($(element).find(THISCONFIG.eleTorItemSeednum).text().trim()) || 0;
       
       if (item.length == 0) { continue}
       // refer to Line 978:
@@ -1326,10 +1322,9 @@ var asyncApiDownload = async (html, doDownload) => {
       let imdbid = THISCONFIG.funcIMDbId(element);
       let dllink = getDownloadLink(torlist[index], passKeyStr);
 
-      if (dllink) {
+      if (dllink && seednum > 0) {
         // check detal page imdb only when doDownload
         // hdsky exception: need fetch detail page
-        // hdchina exception: donot fetch detail page
         if (doDownload && (!imdbid  || THISCONFIG.host == "hdsky.me")) {
           let res = await getDetailPageIMDbAndDlink(dllink);
           imdbid = res[0];
@@ -1352,7 +1347,7 @@ var asyncApiDownload = async (html, doDownload) => {
     }
   }
   if (doDownload){
-    $("#process-log").text("查重下载已提交");
+    ;// $("#process-log").text("查重下载已提交");
   }
   else {
     // $("#process-log").text("查重已提交");
