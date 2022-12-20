@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.9
+// @version      0.9.11
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -206,7 +206,14 @@ const ob_passkey = async () => {
 //  ====== ssd
 const ssd_imdbval = (element) => {
   var t = $(element).find("span.torrent-rating");
-  return $(t[0]).text()
+  if (t.length > 1){
+    return $(t[0]).text()
+  }
+  s = t.parent().attr("href");
+  if (s && s.match(/search=(\d+)\b.*search_area=4/)) {
+    return $(t[0]).text()
+  }
+  return ""
   // let imdb = "";
   // if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")) {
   //   imdb = t.text();
@@ -227,7 +234,15 @@ const ssd_imdbid = (element) => {
 
 const ssd_douban = (element) => {
   var t = $(element).find("span.torrent-rating");
-  return $(t[0]).text()
+  if (t.length > 1){
+    return $(t[1]).text()
+  }
+  s = t.parent().attr("href");
+  if (s && s.match(/search=(\d+)\b.*search_area=5/)) {
+    return $(t[0]).text()
+  }
+  return ""
+
   // var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
   // if (d.length <= 0) {
   //   d = $(element).find("td:nth-child(3) > div > a > span");
@@ -1113,8 +1128,8 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
         // console.log("Dupe: " + tordata.torname);
       } else if (response.status == 201) {
         let p = doDownload ? "下载 " : "无重 "
-        SUM_SIZE += (parseInt(torsize) || 0);
-        $("#process-log").text(p + SUM_SIZE+" GB");
+        SUM_SIZE += (parseFloat(torsize) || 0.0);
+        $("#process-log").text(p + SUM_SIZE.toFixed(1) +" GB");
         if (doDownload){
           $(ele).css("background-color", "darkseagreen");
         }
@@ -1352,12 +1367,10 @@ var asyncApiDownload = async (html, doDownload) => {
       }
     }
   }
-  if (doDownload){
-    $("#process-log").text("查重下载已提交");
-  }
-  else {
-    $("#process-log").text("查重已提交");
-    DUPECHECKED = true;
+  if (!doDownload) DUPECHECKED = true;
+  if ($("#process-log").text() == '处理中...'){
+    let msg = (doDownload) ? "查重下载已提交" : "查重已提交";
+    $("#process-log").text(msg);
   }
 };
 
