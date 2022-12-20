@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.8
+// @version      0.9.9
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -205,34 +205,38 @@ const ob_passkey = async () => {
 
 //  ====== ssd
 const ssd_imdbval = (element) => {
-  var t = $(element).find("td:nth-child(3) > div:nth-child(1) > a > span");
-  let imdb = "";
-  if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")) {
-    imdb = t.text();
-  }
-  return imdb;
+  var t = $(element).find("span.torrent-rating");
+  return $(t[0]).text()
+  // let imdb = "";
+  // if (t.parent().attr("href") && t.parent().attr("href").includes("imdb")) {
+  //   imdb = t.text();
+  // }
+  // return imdb;
 };
 
 const ssd_imdbid = (element) => {
   var t = $(element)
-    .find("td:nth-child(3) > div:nth-child(1) > a")
+    .find("td:nth-child(2) > div:nth-child(2) > span > a:nth-child(1)")
     .attr("href");
   if (t) {
-    var m = t.match(/title\/(tt\d+)/);
+    var m = t.match(/search=(\d+)\b.*search_area=4/);
+    return m ? "tt" + m[1] : "";
   }
-  return m ? m[1] : "";
+  return  "";
 };
 
 const ssd_douban = (element) => {
-  var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
-  if (d.length <= 0) {
-    d = $(element).find("td:nth-child(3) > div > a > span");
-  }
-  let douban = "";
-  if (d.parent().attr("href") && d.parent().attr("href").includes("douban")) {
-    douban = d.text();
-  }
-  return douban;
+  var t = $(element).find("span.torrent-rating");
+  return $(t[0]).text()
+  // var d = $(element).find("td:nth-child(3) > div:nth-child(2) > a > span");
+  // if (d.length <= 0) {
+  //   d = $(element).find("td:nth-child(3) > div > a > span");
+  // }
+  // let douban = "";
+  // if (d.parent().attr("href") && d.parent().attr("href").includes("douban")) {
+  //   douban = d.text();
+  // }
+  // return douban;
 };
 
 const ssd_seeding = (element) => {
@@ -535,17 +539,17 @@ var config = [
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "table.torrents > tbody > tr",
-    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
-    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(6)",
-    eleTorItemSeednum: "td:nth-child(7)",
-    eleTorItemAdded: "td:nth-child(5) > span",
-    useTitleName: 4,
+    eleTorItem: "div.torrent-title > a",
+    eleTorItemDesc: "div.torrent-smalldescr",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
     eleIntnTag: "",
     eleCnLangTag: "",
     eleCnSubTag: "",
     eleDownLink:
-      "td:nth-child(2) > table > tbody > tr > td:nth-child(2)  a",
+      "table.torrentname > tbody > tr > td:nth-child(2)  a",
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -1021,6 +1025,8 @@ var onClickFilterList = (html) => {
       let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
       if (titleele){
         titledesc = titleele.text()
+        titledesc = titledesc.replace(/[\n\r]+/g, '');
+        titledesc = titledesc.replace(/\s{2,10}/g, ' ');
       }
       if (titledesc.match(regex)) {
         keepShow = false;
@@ -1347,10 +1353,10 @@ var asyncApiDownload = async (html, doDownload) => {
     }
   }
   if (doDownload){
-    ;// $("#process-log").text("查重下载已提交");
+    $("#process-log").text("查重下载已提交");
   }
   else {
-    // $("#process-log").text("查重已提交");
+    $("#process-log").text("查重已提交");
     DUPECHECKED = true;
   }
 };
