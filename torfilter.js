@@ -52,6 +52,7 @@ const pter_imdbval = (element) => {
 };
 const pter_imdbid = (element) => {
   var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(7) span");
+  // imdbId: row.find("a span[data-imdbid]").length > 0 ? row.find("a span[data-imdbid]").first().attr("data-imdbid") : null
   return (t && t.attr("data-imdbid")) ? 'tt'+t.attr("data-imdbid") : ''
 };
 
@@ -227,7 +228,9 @@ const ssd_imdbid = (element) => {
     .attr("href");
   if (t) {
     var m = t.match(/search=(\d+)\b.*search_area=4/);
-    return m ? "tt" + m[1] : "";
+    if (m) {
+      return (m[1].length < 7) ? "tt" + m[1].padStart(7, '0') : "tt" + m[1];
+    }
   }
   return  "";
 };
