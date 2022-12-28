@@ -455,6 +455,11 @@ def loadArgs():
                         help='fill tmdb field if it miss.')
     ARGS = parser.parse_args()
 
+def initDatabase():
+    print("Init Database....")
+    with app.app_context():
+        db.create_all()
+
 
 def main():
     loadArgs()
@@ -465,6 +470,7 @@ def main():
     elif ARGS.fill_tmdb:
         fillTMDbListDb()
     else:
+        initDatabase()        
         app.run(host='0.0.0.0', port=3006, debug=True)
 
 
