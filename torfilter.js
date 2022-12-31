@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.12
+// @version      0.9.13
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -32,6 +32,8 @@
 // @match        https://hdchina.org/details.php*
 // @match        https://hdsky.me/torrents.php*
 // @match        https://hdsky.me/details.php*
+// @match        https://hhanclub.top/torrents.php*
+// @match        https://hhanclub.top/details.php*
 
 // ==/UserScript==
 
@@ -210,7 +212,7 @@ const ssd_imdbval = (element) => {
   if (t.length > 1){
     return $(t[0]).text()
   }
-  s = t.parent().attr("href");
+  var s = t.parent().attr("href");
   if (s && s.match(/search=(\d+)\b.*search_area=4/)) {
     return $(t[0]).text()
   }
@@ -240,7 +242,7 @@ const ssd_douban = (element) => {
   if (t.length > 1){
     return $(t[1]).text()
   }
-  s = t.parent().attr("href");
+  var s = t.parent().attr("href");
   if (s && s.match(/search=(\d+)\b.*search_area=5/)) {
     return $(t[0]).text()
   }
@@ -435,6 +437,40 @@ const sky_passkey = async () => {
   //   var key = passkeyRow.find("td:last").text();
   //   return "&passkey=" + key.trim();
   // }
+  return "";
+};
+
+//  ====== hhclub
+const hh_imdbval = (element) => {
+  var t = $(element).find("img[title='imdb']");
+  return t.next().text();
+};
+
+
+const hh_douban = (element) => {
+  var d = $(element).find("img[title='douban']");
+  return d.next().text();
+};
+
+const hh_seeding = (element) => {
+  var s = $(element).find("[title*='leeching']");
+  var d = $(element).find("[title*='seeding']");
+  return s.length > 0 || d.length > 0;
+};
+
+const hh_downed = (element) => {
+  var d = $(element).find("[title*='inactivity']");
+
+  return d && d.length > 0 ;
+};
+
+const hh_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
   return "";
 };
 
@@ -712,6 +748,33 @@ var config = [
     funcSeeding: sky_seeding,
     funcDownloaded: sky_downed,
     funcGetPasskey: sky_passkey,
+  },
+  {
+    host: "hhanclub.top",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table.main > tbody > tr > td > p:nth-child(2) > font:nth-child(4) > b",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "span:contains('国语')",
+    eleCnSubTag: "span:contains('中字')",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(3) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: hh_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: hh_douban,
+    funcSeeding: hh_seeding,
+    funcDownloaded: hh_downed,
+    funcGetPasskey: not_supported,
   },  
 ];
 
