@@ -159,7 +159,7 @@ def rssGetDetailAndDownload(rsslink):
         # print('Sleeping for %d seconds' % ARGS.sleep)
         time.sleep(ARGS.sleep)
 
-    print('Total: %d, Accepted: %d ' % (rssSum, rssAccept))
+    print('Total: %d, Accepted: %d (%s)' % (rssSum, rssAccept, datetime.datetime.now().strftime("%H:%M:%S")))
 
 
 def validDownloadlink(downlink):
