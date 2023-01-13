@@ -147,15 +147,14 @@ def rssGetDetailAndDownload(rsslink):
         if hasattr(item, 'links') and len(item.links) > 1:
             rssDownloadLink = item.links[1]['href']
             rssSize = item.links[1]['length']
-            # Download
-            rssAccept += 1
             print('   %s (%s), %s' %
                   (imdbstr, HumanBytes.format(int(rssSize)), rssDownloadLink))
             r = checkDupAddTor(item.title, rssDownloadLink,
                                imdbstr, forceDownload=False)
             print('   >> %d ' % r)
-            # if ARGS.host and ARGS.username:
-            #     r = addQbitWithTag(rssDownloadLink, imdbstr)
+            if r == 201:
+                # Download
+                rssAccept += 1
         # print('Sleeping for %d seconds' % ARGS.sleep)
         time.sleep(ARGS.sleep)
 
@@ -315,7 +314,7 @@ def parseDetailPage(pageUrl, pageCookie):
             doubanval = tryFloat(m2[1])
         print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
 
-        if (imdbval and imdbval < ARGS.min_imdb) and (doubanval and doubanval < ARGS.min_imdb):
+        if (imdbval < ARGS.min_imdb) and (doubanval < ARGS.min_imdb):
             return False, '', ''
 
 
