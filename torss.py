@@ -117,7 +117,7 @@ def rssGetDetailAndDownload(rsslink):
               datetime.datetime.now().strftime("%H:%M:%S")))
 
         if existsRssHistory(item.title):
-            print("   >> exists in rss history, skip")
+            # print("   >> exists in rss history, skip")
             continue
         saveRssHistory(item.title)
 
