@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2023.1.14: torss
 * 2022.12.14: hdc, hds
 * 2022.12.13: 对在列表页没有IMDb信息的站点，取详情页获取IMDb信息再下载
 * 2022.12.12: frds,beitai等站点支持；未作种，未曾下，列表页仅查重，查&下
@@ -176,14 +177,15 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 * dupapi接受浏览器插件torfilter连接，会连themoviedb.org查TMDb，会连qbit下载器进行下载；所以需三方网络都通，特别地，连接TMDb查询，可能需配置 host 或 梯；
 * dupapi当前对于剧集，没有分辨季与集，只要有就判重，可在详情页手动点下载。
 
+-----
 
-## torss
+# torss
 * torss用于通过站点提供的rss链接，结合种子详情页解析出IMDb信息，添加种子时同时添加IMDb标签
 * torss所使用的qBit下载器，与dupapi共用 `config.ini` 中的设置
 * torss在下载时也会进行查重，与dupapi同样使用 `instance` 子目录中的SQLite 数据库
 
 
-### 使用
+## 使用
 ```
 python3 torss.py -h
 
@@ -214,7 +216,7 @@ options:
 ```
 * 注： 不加 `--cookie` 不解析种子信息页，
 
-### 示例
+## 示例
 * 从rss链接中，逐个获取种子详情页，提取IMDb id并将种子发送至下载器，打上IMDB标签
 ```sh
 python torss.py -R "https://some.pt.site/torrentrss.php?rows=10&..." -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
