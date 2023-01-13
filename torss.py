@@ -112,13 +112,14 @@ def rssGetDetailAndDownload(rsslink):
             print('!! No title')
             continue
 
+        if existsRssHistory(item.title):
+            # print("   >> exists in rss history, skip")
+            continue
+
         rssSum += 1
         print("%d: %s (%s)" % (rssSum, item.title,
               datetime.datetime.now().strftime("%H:%M:%S")))
 
-        if existsRssHistory(item.title):
-            # print("   >> exists in rss history, skip")
-            continue
         saveRssHistory(item.title)
 
         if ARGS.title_regex:
