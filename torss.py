@@ -276,6 +276,13 @@ def addQbitWithTag(downlink, imdbtag):
 #     abbrev = hostnameList[-2] if len(hostnameList) >= 2 else ''
 #     return next(filter(lambda ele: ele['host'] == abbrev, SITE_CONFIGS), None)
 
+def tryFloat(fstr):
+    try:
+        f = float(fstr)
+    except:
+        f = 0.0
+    return f
+
 
 def parseDetailPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
@@ -297,6 +304,20 @@ def parseDetailPage(pageUrl, pageCookie):
         if re.search(ARGS.info_not_regex, doc, flags=re.A):
             print('  >> info_not_regex not match.')
             return False, '', ''
+    if ARGS.min_imdb:
+        imdbval = 0
+        m1 = re.search(r'IMDb评分.*?([0-9.]+)/10', doc, flags=re.A)
+        if m1:
+            imdbval = tryFloat(m1[1])
+        doubanval = 0
+        m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.A)
+        if m2:
+            doubanval = tryFloat(m2[1])
+        print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
+
+        if (imdbval and imdbval < ARGS.min_imdb) and (doubanval and doubanval < ARGS.min_imdb):
+            return False, '', ''
+
 
     imdbstr = ''
     # imdbRe = r'IMDb(链接)\s*(\<.[!>]*\>)?.*https://www\.imdb\.com/title/tt(\d+)'
@@ -339,6 +360,8 @@ def loadArgs():
     parser.add_argument('--exclude-no-imdb',
                         action='store_true',
                         help='Do not download without IMDb')
+    parser.add_argument('--min-imdb', type=int,
+                        help='filter imdb greater than <MIN_IMDb>.')
     parser.add_argument('--init-rss-history', action='store_true',
                         help='Init rss history table.')
     global ARGS
