@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.13
+// @version      0.9.15
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -11,8 +11,8 @@
 // @grant        GM.xmlHttpRequest
 // @connect      localhost
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
-// @match        https://pterclub.com/torrents.php*
-// @match        https://pterclub.com/officialgroup*
+// @match        https://*pterclub.com/torrents.php*
+// @match        https://*pterclub.com/officialgroup*
 // @match        https://pterclub.com/details.php*
 // @match        https://chdbits.co/torrents.php*
 // @match        https://chdbits.co/details.php*
@@ -28,8 +28,8 @@
 // @match        https://totheglory.im/t/*
 // @match        https://pt.keepfrds.com/torrents.php*
 // @match        https://pt.keepfrds.com/details.php*
-// @match        https://hdchina.org/torrents.php*
-// @match        https://hdchina.org/details.php*
+// @match        https://*hdchina.org/torrents.php*
+// @match        https://*hdchina.org/details.php*
 // @match        https://hdsky.me/torrents.php*
 // @match        https://hdsky.me/details.php*
 // @match        https://hhanclub.top/torrents.php*

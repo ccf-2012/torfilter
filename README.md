@@ -177,3 +177,61 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 * dupapi当前对于剧集，没有分辨季与集，只要有就判重，可在详情页手动点下载。
 
 
+## torss
+* torss用于通过站点提供的rss链接，结合种子详情页解析出IMDb信息，添加种子时同时添加IMDb标签
+* torss所使用的qBit下载器，与dupapi共用 `config.ini` 中的设置
+* torss在下载时也会进行查重，与dupapi同样使用 `instance` 子目录中的SQLite 数据库
+
+
+### 使用
+```
+python3 torss.py -h
+
+usage: torss.py [-h] [-R RSS] [-s SINGLE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX] [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause]
+                [--exclude-no-imdb] [--init-rss-history]
+
+A script to rss pt site, add torrent to qbit with IMDb id as a tag.
+
+options:
+  -h, --help            show this help message and exit
+  -R RSS, --rss RSS     the rss link.
+  -s SINGLE, --single SINGLE
+                        fetch single torrent in detail page.
+  -c COOKIE, --cookie COOKIE
+                        the cookie to the detail page.
+  --title-regex TITLE_REGEX
+                        regex to match the rss title.
+  --title-not-regex TITLE_NOT_REGEX
+                        regex to not match the rss title.
+  --info-regex INFO_REGEX
+                        regex to match the info/detail page.
+  --info-not-regex INFO_NOT_REGEX
+                        regex to not match the info/detail page.
+  --sleep SLEEP         sleep between each request of info page.
+  --add-pause           Add torrent in PAUSE state.
+  --exclude-no-imdb     Do not download without IMDb
+  --init-rss-history    Init rss history table.
+```
+* 注： 不加 `--cookie` 不解析种子信息页，
+
+### 示例
+* 从rss链接中，逐个获取种子详情页，提取IMDb id并将种子发送至下载器，打上IMDB标签
+```sh
+python torss.py -R "https://some.pt.site/torrentrss.php?rows=10&..." -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+```
+
+* 取单个页面，提取IMDb id并将种子发送至下载器，打上IMDB标签
+```sh
+python torss.py -i "https://some.pt.site/details.php?id=60381"  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+```
+
+* 标题中包含 x264 且以 ADE 结尾的，且非单集剧集(标题中不包含 'Ep07'这样的分集特征的)
+```sh
+python torss.py --title-regex 'x264.*[-@]?ADE$' --title-not-regex 'Ep?\d+' -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+```
+
+* 信息详情页可解析到更多信息，提供了 `--info-regex` 和 `--info-not-regex` 两个正则，下面例子是在AUD的RSS中过滤：有中字，非国语，且有IMDb的种子(仅作示例，观众站RSS本身提供国语中字标签的过滤)：
+```sh
+python torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-no-imdb  -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  
+```
+

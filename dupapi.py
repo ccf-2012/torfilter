@@ -280,7 +280,7 @@ def loadEmbyLibrary():
 
     r = ec.getMediaList()
     for item in r:
-        # print(item["Name"])
+        print(">> " + item["Name"])
         pi = MediaItem(title=item["Name"])
         pi.key = item["ServerId"]
         pi.audienceRating = item["CommunityRating"] if "CommunityRating" in item else 0
@@ -293,8 +293,9 @@ def loadEmbyLibrary():
 
         pd = item["PremiereDate"] if "PremiereDate" in item else ""
         if 'Tmdb' not in guids:
-            print("No TMDb: " + item["Name"] + pd)
+            print("    TMDb Not Found: %s (%s) " % (item["Name"], pd))
             pi.tmdb = searchTMDb(p, item["Name"], pi.imdb)
+        print("   %s: (TMDb: %s, IMDb: %s)\n    %s" % (pi.title, pi.tmdb, pi.imdb, os.path.dirname(item["Path"])))
         with app.app_context():
             db.session.add(pi)
             db.session.commit()
