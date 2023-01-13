@@ -190,7 +190,7 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 python3 torss.py -h
 
 usage: torss.py [-h] [-R RSS] [-s SINGLE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX] [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause]
-                [--exclude-no-imdb] [--init-rss-history]
+                [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--init-rss-history]
 
 A script to rss pt site, add torrent to qbit with IMDb id as a tag.
 
@@ -212,6 +212,7 @@ options:
   --sleep SLEEP         sleep between each request of info page.
   --add-pause           Add torrent in PAUSE state.
   --exclude-no-imdb     Do not download without IMDb
+  --min-imdb MIN_IMDB   filter imdb greater than <MIN_IMDb>.
   --init-rss-history    Init rss history table.
 ```
 * 注： 不加 `--cookie` 不解析种子信息页，
