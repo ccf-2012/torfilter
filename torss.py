@@ -300,8 +300,8 @@ def parseDetailPage(pageUrl, pageCookie):
     topTitle = ''
     mt = re.search(r'id=\"top\"[^>]*>([^<\n]*)', doc, flags=re.A)
     if mt:
-        topTitle = mt[1]
-        print(topTitle)
+        topTitle = mt[1].replace("&nbsp;", "")
+        print("Detail page title: " + topTitle)
 
     if ARGS.info_regex:
         if not re.search(ARGS.info_regex, doc, flags=re.A):
