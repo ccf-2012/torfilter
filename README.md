@@ -213,28 +213,62 @@ options:
   --add-pause           Add torrent in PAUSE state.
   --exclude-no-imdb     Do not download without IMDb
   --min-imdb MIN_IMDB   filter imdb greater than <MIN_IMDb>.
-  --init-rss-history    Init rss history table.
+  --init-rss-history    Init/Empty rss history table.
 ```
 * 注： 不加 `--cookie` 不解析种子信息页，
 
 ## 示例
 * 从rss链接中，逐个获取种子详情页，提取IMDb id并将种子发送至下载器，打上IMDB标签
 ```sh
-python torss.py -R "https://some.pt.site/torrentrss.php?rows=10&..." -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+python3 torss.py -R "https://some.pt.site/torrentrss.php?rows=10&..." -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
 ```
 
 * 取单个页面，提取IMDb id并将种子发送至下载器，打上IMDB标签
 ```sh
-python torss.py -i "https://some.pt.site/details.php?id=60381"  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+python3 torss.py -i "https://some.pt.site/details.php?id=60381"  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
 ```
 
-* 标题中包含 x264 且以 ADE 结尾的，且非单集剧集(标题中不包含 'Ep07'这样的分集特征的)
+* 标题中包含 x264 且以 ADE 结尾的，且非单集剧集(标题中不包含 'E07'这样的分集特征的)
 ```sh
-python torss.py --title-regex 'x264.*[-@]?ADE$' --title-not-regex 'Ep?\d+' -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
+python3 torss.py --title-regex 'x264.*[-@]?ADE$' --title-not-regex 'Ep?\d+' -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
 ```
 
-* 信息详情页可解析到更多信息，提供了 `--info-regex` 和 `--info-not-regex` 两个正则，下面例子是在AUD的RSS中过滤：有中字，非国语，且有IMDb的种子(仅作示例，观众站RSS本身提供国语中字标签的过滤)：
+* 信息详情页可解析到更多信息，提供了 `--info-regex` 和 `--info-not-regex` 两个正则，比如下面例子是通过详情页信息过滤：有中字，非国语，且有IMDb的种子(仅作示例，部分站如观众和猫，建RSS链接时本身提供国语和中字标签的过滤)：
 ```sh
-python torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-no-imdb  -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  
+python3 torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-no-imdb  -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  
 ```
 
+## 注意
+* 如果使用了torfilter，在获得cookie字串后，要将torfilter添加的部分删除，如这样的字串："filterParam=minimdb=5&sizerange=&titleregex=720&descregex=ç¬¬\d+&seeding=true&downloaded=false&chnsub=false&nochnlang=false"
+* `--exclude-no-imdb` 选项是指站点详情页上没有提供IMDb信息即停止下载，然而大部分站点给的rss标题通过解析是可以查询到TMDb的
+* `--min-imdb` 采用的是站点详情页面上给出的IMDb评分，是不可靠的，且如果页面没有给出即会导致不下载
+
+
+
+## 定时运行
+* 使用crontab定时运行rss任务
+* 示例：在 `/home/ccf2013/torfilter/` 下建一个 `aderss.sh` 文件，内容如下：
+
+```sh
+#!/bin/bash
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/aderss.log 2>>&1
+```
+
+* 同目录下可再建多个，如 `pterrss.sh`:
+```sh
+#!/bin/bash
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/pterrss.log 2>>&1
+```
+* 对所建脚本加运行权限
+```sh
+chmod 755 /home/ccf2013/torfilter/aderss.sh
+chmod 755 /home/ccf2013/torfilter/pterrss.sh
+```
+
+* 运行 `crontab -e` 编辑内容如下：
+```sh
+0 */2 * * * /home/ccf2013/torfilter/aderss.sh # 每2小时运行一次，在0分开始
+20 */3 * * * /home/ccf2013/torfilter/pterrss.sh # 每3小时运行一次，在20分开始
+```
+
+* 存盘，即可

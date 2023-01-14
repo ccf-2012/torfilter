@@ -5,3 +5,6 @@ flask_sqlalchemy
 flask
 qbittorrent-api
 tmdbv3api
+requests
+urllib3
+feedparser

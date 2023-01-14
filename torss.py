@@ -379,7 +379,7 @@ def loadArgs():
     parser.add_argument('--min-imdb', type=int,
                         help='filter imdb greater than <MIN_IMDb>.')
     parser.add_argument('--init-rss-history', action='store_true',
-                        help='Init rss history table.')
+                        help='Init/Empty rss history table.')
     global ARGS
     ARGS = parser.parse_args()
     if not ARGS.sleep:
