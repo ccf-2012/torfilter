@@ -82,6 +82,9 @@
 ## 前置准备
 1. python环境
 ```sh
+# 下载
+git clone https://github.com/ccf-2012/torfilter.git
+cd torfilter
 pip install -r requirements.txt
 ```
 
@@ -184,6 +187,9 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 * torss所使用的qBit下载器，与dupapi共用 `config.ini` 中的设置
 * torss在下载时也会进行查重，与dupapi同样使用 `instance` 子目录中的SQLite 数据库
 
+## 前置准备
+* 与前面dupapi部分相同
+
 
 ## 使用
 ```
@@ -247,28 +253,30 @@ python3 torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-n
 
 ## 定时运行
 * 使用crontab定时运行rss任务
-* 示例：在 `/home/ccf2013/torfilter/` 下建一个 `aderss.sh` 文件，内容如下：
+* 示例：在 `/home/ccf2013/torfilter/` 下建一个 `rss_ade.sh` 文件，内容如下：
 
 ```sh
 #!/bin/bash
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/aderss.log 2>>/home/ccf2013/log/aderss_err.log
+cd /home/ccf2013/torfilter/
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/rss_ade.log 2>&1
 ```
 
-* 同目录下可再建多个，如 `pterrss.sh`:
+* 同目录下可再建多个，如 `rss_pter.sh`:
 ```sh
 #!/bin/bash
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/pterrss.log 2>>/home/ccf2013/log/pterrss_err.log
+cd /home/ccf2013/torfilter/
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/rss_pter.log 2>&1
 ```
 * 对所建脚本加运行权限
 ```sh
-chmod 755 /home/ccf2013/torfilter/aderss.sh
-chmod 755 /home/ccf2013/torfilter/pterrss.sh
+chmod 755 /home/ccf2013/torfilter/rss_ade.sh
+chmod 755 /home/ccf2013/torfilter/rss_pter.sh
 ```
 
 * 运行 `crontab -e` 编辑内容如下：
 ```sh
-0 */2 * * * /home/ccf2013/torfilter/aderss.sh # 每2小时运行一次，在0分开始
-20 */3 * * * /home/ccf2013/torfilter/pterrss.sh # 每3小时运行一次，在20分开始
+0 */2 * * * /home/ccf2013/torfilter/rss_ade.sh # 每2小时运行一次，在0分开始
+20 */3 * * * /home/ccf2013/torfilter/rss_pter.sh # 每3小时运行一次，在20分开始
 ```
 
 * 存盘，即可
