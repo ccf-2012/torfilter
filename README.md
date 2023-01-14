@@ -251,13 +251,13 @@ python3 torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-n
 
 ```sh
 #!/bin/bash
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/aderss.log 2>>&1
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/aderss.log 2>>/home/ccf2013/aderss_err.log
 ```
 
 * 同目录下可再建多个，如 `pterrss.sh`:
 ```sh
 #!/bin/bash
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/pterrss.log 2>>&1
+python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/pterrss.log 2>>/home/ccf2013/pterrss_err.log
 ```
 * 对所建脚本加运行权限
 ```sh
