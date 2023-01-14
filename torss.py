@@ -102,9 +102,10 @@ ModelBase.metadata.create_all(engine)
 
 def rssGetDetailAndDownload(rsslink):
     feed = feedparser.parse(rsslink)
-    rssSum = 0
+    rssFeedSum = 0
     rssAccept = 0
     for item in feed.entries:
+        rssFeedSum += 1
         if not hasattr(item, 'id'):
             print('!! No id')
             continue
@@ -116,8 +117,7 @@ def rssGetDetailAndDownload(rsslink):
             # print("   >> exists in rss history, skip")
             continue
 
-        rssSum += 1
-        print("%d: %s (%s)" % (rssSum, item.title,
+        print("%d: %s (%s)" % (rssFeedSum, item.title,
               datetime.datetime.now().strftime("%H:%M:%S")))
 
         saveRssHistory(item.title)
@@ -158,11 +158,11 @@ def rssGetDetailAndDownload(rsslink):
         # print('Sleeping for %d seconds' % ARGS.sleep)
         time.sleep(ARGS.sleep)
 
-    print('Total: %d, Accepted: %d (%s)' % (rssSum, rssAccept, datetime.datetime.now().strftime("%H:%M:%S")))
+    print('Total: %d, Accepted: %d (%s)' % (rssFeedSum, rssAccept, datetime.datetime.now().strftime("%H:%M:%S")))
 
 
 def validDownloadlink(downlink):
-    keystr = ['passkey', 'downhash', 'totheglory.im/dl/', 'download.php?hash=']
+    keystr = ['passkey', 'downhash', 'totheglory.im/dl/', 'totheglory.im/rssdd.php', 'download.php?hash=']
     return any(x in downlink for x in keystr)
 
 
@@ -290,10 +290,12 @@ def parseDetailPage(pageUrl, pageCookie):
     headers = {
         'User-Agent':
         'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        'Content-Type': 'text/html; charset=UTF-8'
     }
 
-    doc = requests.get(pageUrl, headers=headers, cookies=cookies).text
+    r = requests.get(pageUrl, headers=headers, cookies=cookies)
+    r.encoding = r.apparent_encoding
+    doc = r.text
 
     if ARGS.info_regex:
         if not re.search(ARGS.info_regex, doc, flags=re.A):
@@ -305,13 +307,26 @@ def parseDetailPage(pageUrl, pageCookie):
             return False, '', ''
     if ARGS.min_imdb:
         imdbval = 0
-        m1 = re.search(r'IMDb评分.*?([0-9.]+)/10', doc, flags=re.A)
+        m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.A)
         if m1:
             imdbval = tryFloat(m1[1])
         doubanval = 0
         m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.A)
         if m2:
             doubanval = tryFloat(m2[1])
+        if imdbval < 1 and doubanval < 1:
+            ratelist = [x[1] for x in re.finditer(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
+            if len(ratelist) >= 2:               
+                doubanval = tryFloat(ratelist[0])
+                imdbval  = tryFloat(ratelist[1])
+            elif len(ratelist) == 1:
+                #TODO: 不分辨douban/imdb了
+                doubanval = tryFloat(ratelist[0])
+                imdbval  = doubanval
+            # rate1 = re.search(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)
+            # if rate1:
+            #     imdbval = tryFloat(rate1[1])
+
         print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
 
         if (imdbval < ARGS.min_imdb) and (doubanval < ARGS.min_imdb):
