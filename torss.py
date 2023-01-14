@@ -124,12 +124,12 @@ def rssGetDetailAndDownload(rsslink):
 
         if ARGS.title_regex:
             if not re.search(ARGS.title_regex, item.title, re.I):
-                print('  >> title_regex not match.')
+                print('  >> TITLE_REGEX not match.')
                 continue
 
         if ARGS.title_not_regex:
             if re.search(ARGS.title_not_regex, item.title, re.I):
-                print('  >> title_not_regex not match.')
+                print('  >> TITLE_NOT_REGEX not match.')
                 continue
 
         imdbstr = ''
@@ -260,7 +260,8 @@ def addQbitWithTag(downlink, imdbtag):
             use_auto_torrent_management=False)
         # breakpoint()
         if 'OK' in result.upper():
-            print('   >> Torrent added.')
+            pass
+            # print('   >> Torrent added.')
         else:
             print('   >> Torrent not added! something wrong with qb api ...')
     except Exception as e:
@@ -299,11 +300,11 @@ def parseDetailPage(pageUrl, pageCookie):
 
     if ARGS.info_regex:
         if not re.search(ARGS.info_regex, doc, flags=re.A):
-            print('  >> info_regex not match.')
+            print('  >> INFO_REGEX not match.')
             return False, '', ''
     if ARGS.info_not_regex:
         if re.search(ARGS.info_not_regex, doc, flags=re.A):
-            print('  >> info_not_regex not match.')
+            print('  >> INFO_NOT_REGEX not match.')
             return False, '', ''
     if ARGS.min_imdb:
         imdbval = 0
@@ -330,6 +331,7 @@ def parseDetailPage(pageUrl, pageCookie):
         print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
 
         if (imdbval < ARGS.min_imdb) and (doubanval < ARGS.min_imdb):
+            print("   >> MIN_IMDb not match")
             return False, '', ''
 
 
