@@ -195,15 +195,15 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 ```
 python3 torss.py -h
 
-usage: torss.py [-h] [-R RSS] [-s SINGLE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX] [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause]
-                [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--init-rss-history]
+usage: torss.py [-h] [-R RSS] [-s SINGLE_PAGE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX]
+                [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause] [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--init-rss-history]
 
 A script to rss pt site, add torrent to qbit with IMDb id as a tag.
 
 options:
   -h, --help            show this help message and exit
   -R RSS, --rss RSS     the rss link.
-  -s SINGLE, --single SINGLE
+  -s SINGLE_PAGE, --single-page SINGLE_PAGE
                         fetch single torrent in detail page.
   -c COOKIE, --cookie COOKIE
                         the cookie to the detail page.

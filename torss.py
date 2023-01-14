@@ -16,14 +16,14 @@ import time
 from sqlalchemy import Column, String, Integer, Float, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
+from urllib.parse import urlparse
 
 from humanbytes import HumanBytes
 # from lxml import etree
 
 DOWNLOAD_URL_RE = [
-    r'https?://(\w+\.)?\w+\.\w+/download\.php\?id=(\d+)&downhash=(\w+)',
-    r'https?://(\w+\.)?\w+\.\w+/download\.php\?id=(\d+)&passkey=(\w+)',
+    r'download\.php\?id=(\d+)&downhash=(\w+)',
+    r'download\.php\?id=(\d+)&passkey=(\w+)',
 ]
 
 
@@ -135,7 +135,7 @@ def rssGetDetailAndDownload(rsslink):
         imdbstr = ''
         if ARGS.cookie:
             if hasattr(item, 'link'):
-                match, imdbstr, downlink = parseDetailPage(
+                match, imdbstr, downlink, title = parseDetailPage(
                     item.link, ARGS.cookie)
                 if not match:
                     # print('  >> Info page regex not match.')
@@ -297,15 +297,20 @@ def parseDetailPage(pageUrl, pageCookie):
     r = requests.get(pageUrl, headers=headers, cookies=cookies)
     r.encoding = r.apparent_encoding
     doc = r.text
+    topTitle = ''
+    mt = re.search(r'id=\"top\"[^>]*>([^<\n]*)', doc, flags=re.A)
+    if mt:
+        topTitle = mt[1]
+        print(topTitle)
 
     if ARGS.info_regex:
         if not re.search(ARGS.info_regex, doc, flags=re.A):
             print('  >> INFO_REGEX not match.')
-            return False, '', ''
+            return False, '', '', ''
     if ARGS.info_not_regex:
         if re.search(ARGS.info_not_regex, doc, flags=re.A):
             print('  >> INFO_NOT_REGEX not match.')
-            return False, '', ''
+            return False, '', '', ''
     if ARGS.min_imdb:
         imdbval = 0
         m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.A)
@@ -332,7 +337,7 @@ def parseDetailPage(pageUrl, pageCookie):
 
         if (imdbval < ARGS.min_imdb) and (doubanval < ARGS.min_imdb):
             print("   >> MIN_IMDb not match")
-            return False, '', ''
+            return False, '', '', ''
 
 
     imdbstr = ''
@@ -350,7 +355,11 @@ def parseDetailPage(pageUrl, pageCookie):
     if m2:
         downlink = m2[0]
 
-    return True, imdbstr, downlink
+    if downlink:
+        parsed_uri = urlparse(pageUrl)
+        downlink = '{uri.scheme}://{uri.netloc}/{relink}'.format(uri=parsed_uri, relink=downlink)
+
+    return True, imdbstr, downlink, topTitle
 
 
 def loadArgs():
@@ -359,7 +368,7 @@ def loadArgs():
     )
     parser.add_argument('-R', '--rss', help='the rss link.')
     parser.add_argument(
-        '-s', '--single', help='fetch single torrent in detail page.')
+        '-s', '--single-page', help='fetch single torrent in detail page.')
     parser.add_argument(
         '-c', '--cookie', help='the cookie to the detail page.')
     parser.add_argument('--title-regex', help='regex to match the rss title.')
@@ -402,14 +411,16 @@ def main():
     if ARGS.rss:
         rssGetDetailAndDownload(ARGS.rss)
 
-    elif ARGS.single:
+    elif ARGS.single_page:
         if ARGS.cookie:
-            imdbstr, downlink = parseDetailPage(ARGS.info_url, ARGS.cookie)
+            match, imdbstr, downlink, title = parseDetailPage(ARGS.single_page, ARGS.cookie)
             if not downlink:
                 print("Error: download link not found")
                 return
             print(imdbstr, downlink)
-            r = addQbitWithTag(downlink, imdbstr)
+            r = checkDupAddTor(title, downlink, imdbstr, forceDownload=False)
+            print('   >> %d ' % r)
+            # r = addQbitWithTag(downlink, imdbstr)
 
 
 if __name__ == '__main__':
