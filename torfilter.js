@@ -34,6 +34,8 @@
 // @match        https://hdsky.me/details.php*
 // @match        https://hhanclub.top/torrents.php*
 // @match        https://hhanclub.top/details.php*
+// @match        https://lemonhd.org/torrents*
+// @match        https://lemonhd.org/details*
 
 // ==/UserScript==
 
@@ -474,6 +476,45 @@ const hh_passkey = async () => {
   return "";
 };
 
+//  ====== lemonhd
+const lhd_imdbval = (element) => {
+  var t = $(element).find( "a[href*='imdb']" );
+  return t.text();
+};
+const lhd_imdbid = (element) => {
+  var t = $(element)
+    .find("a[href*='imdb']" )
+    .attr("href");
+  
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
+const lhd_douban = (element) => {
+  var d = $(element).find("a[href*='douban']");
+  return d.text();
+};
+const lhd_seeding = (element) => {
+  var d = $(element).find("td.rowfollow.peer-active");
+  return d.length > 0 && d.attr("title").startsWith("100");
+};
+const lhd_downed = (element) => {
+  var d = $(element).find("td:nth-child(10) > b");
+  return d.text() != "--";;
+};
+
+const lhd_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
+
 
 var config = [
   {
@@ -775,7 +816,34 @@ var config = [
     funcSeeding: hh_seeding,
     funcDownloaded: hh_downed,
     funcGetPasskey: not_supported,
-  },  
+  },
+  // TODO: gazella, animate cat fails
+  {
+    host: "lemonhd.org",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "td:nth-child(3) > div:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(3) > div:nth-child(2)",
+    eleTorItemSize: "td:nth-child(6)",
+    eleTorItemSeednum: "td:nth-child(7)",
+    eleTorItemAdded: "td:nth-child(5) > span",
+    useTitleName: 0,
+    eleIntnTag: "span.tag_gf",
+    eleCnLangTag: "span.tag_gy",
+    eleCnSubTag: "span.tag_zz",
+    eleDownLink: "td:nth-child(3) > a:nth-child(4)",
+    eleCatImg: "td:nth-child(1) > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: lhd_imdbval,
+    funcIMDbId: lhd_imdbid,
+    funcDouban: lhd_douban,
+    funcSeeding: lhd_seeding,
+    funcDownloaded: lhd_downed,
+    funcGetPasskey: lhd_passkey,
+  },
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
@@ -1525,7 +1593,7 @@ function addAdoptColumn(html) {
 (function () {
   "use strict";
   if (THISCONFIG) {
-    if (window.location.href.match(/details.php/) ||
+    if (window.location.href.match(/details/) ||
         window.location.href.match(/totheglory.im\/t/) ) {
       addDetailPagePanel();
       $("#btn-detail-checkdupe").click(function () {

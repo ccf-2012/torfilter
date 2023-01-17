@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2023.1.17: lemonhd (gazella, animate分类无效)
 * 2023.1.14: torss
 * 2022.12.14: hdc, hds
 * 2022.12.13: 对在列表页没有IMDb信息的站点，取详情页获取IMDb信息再下载
@@ -38,13 +39,14 @@
 ## 功能
 油猴脚本，在种子列表页中:
 1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-    * 当前支持pter, chd, ade, ob, ssd, frds, beitai, ttg, hdc, hds
+    * 当前支持pter, chd, ade, ob, ssd, frds, beitai, ttg, hdc, hds, lhd
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
 3. 配合 dupapi.py 实现查重下载入库 (since 2022.10.9)
 
 * 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
 * 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
+* lhd中gazella模式和animate分类无效
 
 
 ### 列表页的查重与下载
