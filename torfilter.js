@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.15
+// @version      0.9.16
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -1332,7 +1332,7 @@ function getHDCuid() {
 }
 
 
-function getIMDb() {
+function getCurrentPageIMDb() {
   let bodytext = $("body").html();
   let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( bodytext );
   if (datas && datas.length > 1) {
@@ -1384,7 +1384,7 @@ var asyncDetailApiDownload = async (html, forcedl) => {
 
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
-    let imdbid = getIMDb();
+    let imdbid = getCurrentPageIMDb();
     var tordata = {
       torname: titlestr,
       imdbid: imdbid,
@@ -1399,14 +1399,17 @@ var asyncDetailApiDownload = async (html, forcedl) => {
 };
 
 
-var getDetailPageIMDbAndDlink = async (downloadLink) => {
-  let m = downloadLink.match(/\?id=(\d+)/);
-  if (!m) {
+var fetchDetailPageGetIMDbAndDlink = async (detailLink, downloadLink) => {
+  // let m = downloadLink.match(/\?id=(\d+)/);
+  // if (!m) {
+  //   return ["", downloadLink];
+  // }
+  // var torrentId = m[1];
+  if (!detailLink) {
     return ["", downloadLink];
   }
-  var torrentId = m[1];
 
-  let detailhtml = await $.get("/details.php?id="+torrentId);
+  let detailhtml = await $.get(detailLink);
   let datas = /www\.imdb\.com\/title\/(tt\d+)/.exec( detailhtml );
   let dllink = _getDownloadUrlByPossibleHrefs(detailhtml);
   if (!dllink) {
@@ -1462,7 +1465,7 @@ var asyncApiDownload = async (html, doDownload) => {
     if ($(torlist[index]).is(":visible")) {
       let element = torlist[index];
       let item = $(element).find(THISCONFIG.eleTorItem);
-
+      let detailLink = item.prop("href")
       let seednum = parseInt($(element).find(THISCONFIG.eleTorItemSeednum).text().trim()) || 0;
       
       if (item.length == 0) { continue}
@@ -1481,10 +1484,10 @@ var asyncApiDownload = async (html, doDownload) => {
         // check detal page imdb only when doDownload
         // hdsky exception: need fetch detail page
         if (doDownload && (!imdbid  || THISCONFIG.host == "hdsky.me")) {
-          let res = await getDetailPageIMDbAndDlink(dllink);
+          let res = await fetchDetailPageGetIMDbAndDlink(detailLink, dllink);
           imdbid = res[0];
           dllink = res[1];
-          console.log(titlestr, imdbid);
+          console.log("DETAIL_PAGE: ", titlestr, imdbid);
         }
         var tordata = {
           torname: titlestr,
@@ -1540,7 +1543,7 @@ var asyncDetailCheckDupe = async (html) => {
   let titlestr = getDetailTitle();
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
-    let imdbid = getIMDb();
+    let imdbid = getCurrentPageIMDb();
     var tordata = {
       torname: titlestr,
       imdbid: imdbid,
