@@ -498,7 +498,7 @@ const lhd_douban = (element) => {
 };
 const lhd_seeding = (element) => {
   var d = $(element).find("td.rowfollow.peer-active");
-  return d.length > 0 && d.attr("title").startsWith("100");
+  return d.length > 0 ;
 };
 const lhd_downed = (element) => {
   var d = $(element).find("td:nth-child(10) > b");
