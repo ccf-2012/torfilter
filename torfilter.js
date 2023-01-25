@@ -519,6 +519,7 @@ const lhd_passkey = async () => {
 var config = [
   {
     host: "pterclub.com",
+    abbrev: "pter",
     eleTorTable: "#torrenttable",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font",
     eleTorList: "#torrenttable > tbody > tr",
@@ -546,6 +547,7 @@ var config = [
   },
   {
     host: "chdbits.co",
+    abbrev: "chd",
     eleTorTable: "#outer > table > tbody > tr > td > table",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
@@ -574,6 +576,7 @@ var config = [
   },
   {
     host: "audiences.me",
+    abbrev: "aud",
     eleTorTable: "#torrenttable",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(2) > font",
     eleTorList: "#torrenttable > tbody > tr",
@@ -604,6 +607,7 @@ var config = [
   },
   {
     host: "ourbits.club",
+    abbrev: "ob",
     eleTorTable: "#torrenttable",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(7) > font",
     eleTorList: "#torrenttable > tbody > tr",
@@ -631,6 +635,7 @@ var config = [
   },
   {
     host: "springsunday.net",
+    abbrev: "ssd",
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "table.torrents > tbody > tr",
@@ -658,6 +663,7 @@ var config = [
   },
   {
     host: "totheglory.im",
+    abbrev: "ttg",
     eleTorTable: "#torrent_table",
     eleCurPage: "#main_table > tbody > tr:nth-child(1) > td > p:nth-child(9) > a:nth-child(5) > b",
     eleTorList: "#torrent_table > tbody > tr",
@@ -685,6 +691,7 @@ var config = [
   },
   {
     host: "pt.keepfrds.com",
+    abbrev: "frds",
     eleTorTable: "#form_torrent > table",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(2) > font",
     eleTorList: "#form_torrent > table > tbody > tr",
@@ -712,6 +719,7 @@ var config = [
   },
   {
     host: "www.beitai.pt",
+    abbrev: "beitai",
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "table.torrents > tbody > tr",
@@ -739,6 +747,7 @@ var config = [
   }, 
   {
     host: "hdchina.org",
+    abbrev: "hdc",
     eleTorTable: "#form_torrent > table",
     eleCurPage: "#site_content > div > div.pagenav_part > div > ul > li.active",
     eleTorList: "#form_torrent > table > tbody > tr",
@@ -765,6 +774,7 @@ var config = [
   },  
   {
     host: "hdsky.me",
+    abbrev: "hds",
     eleTorTable: "#outer > table > tbody > tr > td > table",
     eleCurPage: "#outer > table > tbody > tr > td > form:nth-child(8) > p > font",
     eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
@@ -792,6 +802,7 @@ var config = [
   },
   {
     host: "hhanclub.top",
+    abbrev: "hh",
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table.main > tbody > tr > td > p:nth-child(2) > font:nth-child(4) > b",
     eleTorList: "table.torrents > tbody > tr",
@@ -820,6 +831,7 @@ var config = [
   // TODO: gazella, animate cat fails
   {
     host: "lemonhd.org",
+    abbrev: "lhd",
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "table.torrents > tbody > tr",
@@ -1385,10 +1397,12 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
+    let siteId = getSiteId(document.URL, imdbid);
     var tordata = {
       torname: titlestr,
       imdbid: imdbid,
       downloadlink: dllink,
+      siteid: siteId,
       force: forcedl
     };
     await postToDetailCheckDupeApi(
@@ -1454,6 +1468,22 @@ function getDownloadLink(element, passKeyStr){
   return ""
 }
 
+function getSiteId(detailLink, imdbstr){
+  var m = null
+  if (THISCONFIG.host == "totheglory.im")
+  {
+    m = detailLink.match(/t\/(\d+)/);
+  }
+  else {
+    m = detailLink.match(/\?id=(\d+)/);
+  }
+  let sid = m ? m[1] : "";
+  if (imdbstr){
+    sid = sid + "_" + imdbstr
+  }
+  return THISCONFIG.abbrev + "_" + sid
+}
+
 var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
   let dupeChecked = DUPECHECKED 
@@ -1465,7 +1495,7 @@ var asyncApiDownload = async (html, doDownload) => {
     if ($(torlist[index]).is(":visible")) {
       let element = torlist[index];
       let item = $(element).find(THISCONFIG.eleTorItem);
-      let detailLink = item.prop("href")
+      let detailLink = item.prop("href");
       let seednum = parseInt($(element).find(THISCONFIG.eleTorItemSeednum).text().trim()) || 0;
       
       if (item.length == 0) { continue}
@@ -1479,6 +1509,7 @@ var asyncApiDownload = async (html, doDownload) => {
       let titlestr = getItemTitle(item);
       let imdbid = THISCONFIG.funcIMDbId(element);
       let dllink = getDownloadLink(torlist[index], passKeyStr);
+      let siteId = getSiteId(detailLink, imdbid);
 
       if (dllink && seednum > 0) {
         // check detal page imdb only when doDownload
@@ -1493,6 +1524,7 @@ var asyncApiDownload = async (html, doDownload) => {
           torname: titlestr,
           imdbid: imdbid,
           downloadlink: dllink,
+          siteid: siteId,
         };
         await postToFilterDownloadApi(tordata, doDownload, element);
         if (doDownload){

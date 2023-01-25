@@ -143,6 +143,7 @@ def rssGetDetailAndDownload(rsslink):
                 if ARGS.exclude_no_imdb and (not imdbstr):
                     print('  >> Without IMDb')
                     continue
+        siteIdStr = getSiteId(item.link, imdbstr)
 
         if hasattr(item, 'links') and len(item.links) > 1:
             rssDownloadLink = item.links[1]['href']
@@ -150,7 +151,7 @@ def rssGetDetailAndDownload(rsslink):
             print('   %s (%s), %s' %
                   (imdbstr, HumanBytes.format(int(rssSize)), rssDownloadLink))
             r = checkDupAddTor(item.title, rssDownloadLink,
-                               imdbstr, forceDownload=False)
+                               imdbstr, siteIdStr, forceDownload=False)
             print('   >> %d ' % r)
             if r == 201:
                 # Download
@@ -158,11 +159,13 @@ def rssGetDetailAndDownload(rsslink):
         # print('Sleeping for %d seconds' % ARGS.sleep)
         time.sleep(ARGS.sleep)
 
-    print('Total: %d, Accepted: %d (%s)' % (rssFeedSum, rssAccept, datetime.datetime.now().strftime("%H:%M:%S")))
+    print('Total: %d, Accepted: %d (%s)' %
+          (rssFeedSum, rssAccept, datetime.datetime.now().strftime("%H:%M:%S")))
 
 
 def validDownloadlink(downlink):
-    keystr = ['passkey', 'downhash', 'totheglory.im/dl/', 'totheglory.im/rssdd.php', 'download.php?hash=']
+    keystr = ['passkey', 'downhash', 'totheglory.im/dl/',
+              'totheglory.im/rssdd.php', 'download.php?hash=']
     return any(x in downlink for x in keystr)
 
 
@@ -191,7 +194,7 @@ def checkDatabaseExists(torTMDb):
     return exists
 
 
-def checkDupAddTor(torname, downloadLink, imdbstr, forceDownload=False):
+def checkDupAddTor(torname, downloadLink, imdbstr, siteIdStr, forceDownload=False):
     if not torname:
         return 400
 
@@ -223,10 +226,11 @@ def checkDupAddTor(torname, downloadLink, imdbstr, forceDownload=False):
 
                 if not CONFIG.dryrun:
                     print("   >> Added: " + torname)
-                    if not addQbitWithTag(downloadLink.strip(), imdbstr):
+                    if not addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr):
                         return 400
                 else:
-                    print("   >> DRYRUN: " + torname + "\n   >> " + downloadLink)
+                    print("   >> DRYRUN: " + torname +
+                          "\n   >> " + downloadLink)
 
             return 201
     else:
@@ -236,7 +240,7 @@ def checkDupAddTor(torname, downloadLink, imdbstr, forceDownload=False):
         return 203
 
 
-def addQbitWithTag(downlink, imdbtag):
+def addQbitWithTag(downlink, imdbtag, siteIdStr=None):
     qbClient = qbittorrentapi.Client(
         host=CONFIG.qbServer, port=CONFIG.qbPort, username=CONFIG.qbUser, password=CONFIG.qbPass)
 
@@ -250,14 +254,21 @@ def addQbitWithTag(downlink, imdbtag):
 
     try:
         # curr_added_on = time.time()
-        result = qbClient.torrents_add(
-            urls=downlink,
-            is_paused=CONFIG.addPause,
-            # save_path=download_location,
-            # download_path=download_location,
-            # category=timestamp,
-            tags=[imdbtag],
-            use_auto_torrent_management=False)
+        if siteIdStr and ARGS.siteid_folder:
+            result = qbClient.torrents_add(
+                urls=downlink,
+                is_paused=CONFIG.addPause,
+                save_path=siteIdStr,
+                # download_path=download_location,
+                # category=timestamp,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
+        else:
+            result = qbClient.torrents_add(
+                urls=downlink,
+                is_paused=CONFIG.addPause,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
         # breakpoint()
         if 'OK' in result.upper():
             pass
@@ -282,6 +293,33 @@ def tryFloat(fstr):
     except:
         f = 0.0
     return f
+
+
+def abbrevHostloc(url):
+    hostnameList = urlparse(url).netloc.split('.')
+    if len(hostnameList) == 2:
+        sitename = hostnameList[0]
+    elif len(hostnameList) == 3:
+        sitename = hostnameList[1]
+    else:
+        sitename = ''
+    SITE_ABBRES = [('chdbits', 'chd'), ('pterclub', 'pter'), ('audiences', 'aud'),
+                   ('lemonhd', 'lhd'), ('keepfrds', 'frds'), ('ourbits', 'ob'), ('springsunday', 'ssd')]
+    # result = next((i for i, v in enumerate(SITE_ABBRES) if v[0] == sitename), "")
+    abbrev = [x for x in SITE_ABBRES if x[0] == sitename]
+    return abbrev[0][1] if abbrev else sitename
+
+
+def getSiteId(detailLink, imdbstr):
+    siteAbbrev = abbrevHostloc(detailLink)
+    if (siteAbbrev == "ttg"):
+        m = re.search(r"t\/(\d+)", detailLink, flags=re.A)
+    else:
+        m = re.search(r"id=(\d+)", detailLink, flags=re.A )
+    sid = m[1] if m else ""
+    if imdbstr:
+        sid = sid + "_" + imdbstr
+    return siteAbbrev + "_" + sid
 
 
 def parseDetailPage(pageUrl, pageCookie):
@@ -321,14 +359,15 @@ def parseDetailPage(pageUrl, pageCookie):
         if m2:
             doubanval = tryFloat(m2[1])
         if imdbval < 1 and doubanval < 1:
-            ratelist = [x[1] for x in re.finditer(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
-            if len(ratelist) >= 2:               
+            ratelist = [x[1] for x in re.finditer(
+                r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
+            if len(ratelist) >= 2:
                 doubanval = tryFloat(ratelist[0])
-                imdbval  = tryFloat(ratelist[1])
+                imdbval = tryFloat(ratelist[1])
             elif len(ratelist) == 1:
                 #TODO: 不分辨douban/imdb了
                 doubanval = tryFloat(ratelist[0])
-                imdbval  = doubanval
+                imdbval = doubanval
             # rate1 = re.search(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)
             # if rate1:
             #     imdbval = tryFloat(rate1[1])
@@ -338,7 +377,6 @@ def parseDetailPage(pageUrl, pageCookie):
         if (imdbval < ARGS.min_imdb) and (doubanval < ARGS.min_imdb):
             print("   >> MIN_IMDb not match")
             return False, '', '', ''
-
 
     imdbstr = ''
     # imdbRe = r'IMDb(链接)\s*(\<.[!>]*\>)?.*https://www\.imdb\.com/title/tt(\d+)'
@@ -357,7 +395,8 @@ def parseDetailPage(pageUrl, pageCookie):
 
     if downlink:
         parsed_uri = urlparse(pageUrl)
-        downlink = '{uri.scheme}://{uri.netloc}/{relink}'.format(uri=parsed_uri, relink=downlink)
+        downlink = '{uri.scheme}://{uri.netloc}/{relink}'.format(
+            uri=parsed_uri, relink=downlink)
 
     return True, imdbstr, downlink, topTitle
 
@@ -372,7 +411,8 @@ def loadArgs():
     parser.add_argument(
         '-c', '--cookie', help='the cookie to the detail page.')
     parser.add_argument('--title-regex', help='regex to match the rss title.')
-    parser.add_argument('--title-not-regex', help='regex to not match the rss title.')
+    parser.add_argument('--title-not-regex',
+                        help='regex to not match the rss title.')
     parser.add_argument(
         '--info-regex', help='regex to match the info/detail page.')
     parser.add_argument('--info-not-regex',
@@ -387,6 +427,8 @@ def loadArgs():
                         help='Do not download without IMDb')
     parser.add_argument('--min-imdb', type=int,
                         help='filter imdb greater than <MIN_IMDb>.')
+    parser.add_argument('--siteid-folder', action='store_true',
+                        help='make Site_Id_Imdb parent folder.')
     parser.add_argument('--init-rss-history', action='store_true',
                         help='Init/Empty rss history table.')
     global ARGS
@@ -413,12 +455,14 @@ def main():
 
     elif ARGS.single_page:
         if ARGS.cookie:
-            match, imdbstr, downlink, title = parseDetailPage(ARGS.single_page, ARGS.cookie)
+            match, imdbstr, downlink, title = parseDetailPage(
+                ARGS.single_page, ARGS.cookie)
             if not downlink:
                 print("Error: download link not found")
                 return
+            siteIdStr = getSiteId(ARGS.single_page, imdbstr)
             print(imdbstr, downlink)
-            r = checkDupAddTor(title, downlink, imdbstr, forceDownload=False)
+            r = checkDupAddTor(title, downlink, imdbstr, siteIdStr, forceDownload=False)
             print('   >> %d ' % r)
             # r = addQbitWithTag(downlink, imdbstr)
 

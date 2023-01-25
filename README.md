@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2023.1.25: `--siteid-folder` for duapi, torss: 添加种子时建立 'Site_Id_IMDb' 目录，例如：aud_108375_tt1172571
 * 2023.1.17: lemonhd (gazella, animate分类无效)
 * 2023.1.14: torss
 * 2022.12.14: hdc, hds
@@ -137,15 +138,16 @@ python dupapi.py --init-library
 ```
 python dupapi.py -h
 
-usage: dupapi.py [-h] [--init-library] [-a] [--fill-tmdb]
+usage: dupapi.py [-h] [--init-library] [-a] [--fill-tmdb] [--siteid-folder]
 
 A torrent handler does library dupe check, add qbit with tag, etc.
 
 options:
-  -h, --help      show this help message and exit
-  --init-library  init database with plex query.
-  -a, --append    append to local database, without delete old data.
-  --fill-tmdb     fill tmdb field if it miss.
+  -h, --help       show this help message and exit
+  --init-library   init database with plex query.
+  -a, --append     append to local database, without delete old data.
+  --fill-tmdb      fill tmdb field if it miss.
+  --siteid-folder  make Site_Id_Imdb parent folder.
 ```
 
 ### 例子
@@ -198,7 +200,7 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 python3 torss.py -h
 
 usage: torss.py [-h] [-R RSS] [-s SINGLE_PAGE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX]
-                [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause] [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--init-rss-history]
+                [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause] [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--siteid-folder] [--init-rss-history]
 
 A script to rss pt site, add torrent to qbit with IMDb id as a tag.
 
@@ -221,6 +223,7 @@ options:
   --add-pause           Add torrent in PAUSE state.
   --exclude-no-imdb     Do not download without IMDb
   --min-imdb MIN_IMDB   filter imdb greater than <MIN_IMDb>.
+  --siteid-folder       make Site_Id_Imdb parent folder.
   --init-rss-history    Init/Empty rss history table.
 ```
 * 注： 不加 `--cookie` 不解析种子信息页，

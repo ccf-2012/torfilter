@@ -107,9 +107,13 @@ def checkDupAddTor():
     p = TMDbNameParser(CONFIG.tmdb_api_key, '')
 
     imdbstr = ''
-    if 'imdbid' in request.json:
+    if 'imdbid' in request.json and request.json['imdbid']:
         imdbstr = request.json['imdbid'].strip()
     torTMDb = searchTMDb(p, request.json['torname'], imdbstr)
+
+    siteIdStr = ''
+    if 'siteid' in request.json and request.json['siteid']:
+        siteIdStr = request.json['siteid'].strip()
 
     forceDownload = False
     if 'force' in request.json:
@@ -130,7 +134,7 @@ def checkDupAddTor():
 
                 if not CONFIG.dryrun:
                     print("Added: " + request.json['torname'])
-                    if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr):
+                    if not addQbitWithTag(request.json['downloadlink'].strip(), imdbstr, siteIdStr):
                         abort(400)
                 else:
                     # print("DRYRUN: " + request.json['torname'])
@@ -217,7 +221,7 @@ def test_tasks():
     return jsonify(thetime)
 
 
-def addQbitWithTag(downlink, imdbtag):
+def addQbitWithTag(downlink, imdbtag, siteIdStr=None):
     qbClient = qbittorrentapi.Client(
         host=CONFIG.qbServer, port=CONFIG.qbPort, username=CONFIG.qbUser, password=CONFIG.qbPass)
 
@@ -231,14 +235,23 @@ def addQbitWithTag(downlink, imdbtag):
 
     try:
         # curr_added_on = time.time()
-        result = qbClient.torrents_add(
-            urls=downlink,
-            is_paused=CONFIG.addPause,
-            # save_path=download_location,
-            # download_path=download_location,
-            # category=timestamp,
-            tags=[imdbtag],
-            use_auto_torrent_management=False)
+        if siteIdStr and ARGS.siteid_folder:
+            result = qbClient.torrents_add(
+                urls=downlink,
+                is_paused=CONFIG.addPause,
+                # save_path=download_location,
+                # download_path=download_location,
+                save_path=siteIdStr,
+                # category=timestamp,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
+        else:
+            result = qbClient.torrents_add(
+                urls=downlink,
+                is_paused=CONFIG.addPause,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
+
         # breakpoint()
         if 'OK' in result.upper():
             print('Torrent added.')
@@ -454,6 +467,8 @@ def loadArgs():
                         help='append to local database, without delete old data.')
     parser.add_argument('--fill-tmdb', action='store_true',
                         help='fill tmdb field if it miss.')
+    parser.add_argument('--siteid-folder', action='store_true',
+                        help='make Site_Id_Imdb parent folder.')
     ARGS = parser.parse_args()
 
 def initDatabase():
