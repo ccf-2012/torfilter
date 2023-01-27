@@ -20,7 +20,6 @@ class configData():
     tmdbLang = 'en'
     lang = 'cn,ja,ko'
 
-global CONFIG
 CONFIG = configData()
 def readConfig():
     config = configparser.ConfigParser()
@@ -59,4 +58,4 @@ def readConfig():
         CONFIG.addPause = config['QBIT'].getboolean('pause', False)
         CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
-readConfig()
+

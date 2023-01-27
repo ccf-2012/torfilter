@@ -1,7 +1,7 @@
 from ajax_table import TorMediaItem, TorcpItemDBObj, queryByHash
 import os, sys
 from torcp.torcp import Torcp
-from myconfig import CONFIG
+from myconfig import readConfig, CONFIG
 import argparse
 
 def extractIMDbFromTag(tagstr):
@@ -37,6 +37,7 @@ def runTorcp(torpath, torhash, torsize, tortag):
             argv += ["--lang", CONFIG.lang]
         if torimdb:
             argv += ["--imdbid", torimdb]
+        print(argv)
         eo = TorcpItemDBObj(site, siteid, torimdb, torhash.strip(), int(torsize.strip()))
         o = Torcp()
         o.main(argv, eo)
@@ -57,6 +58,7 @@ def loadArgs():
 
 def main():
     loadArgs()
+    readConfig()
     runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag)
 
 
