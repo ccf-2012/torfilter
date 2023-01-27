@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <table id="data" class="table table-striped">
+    <thead>
+      <tr>
+        <th>torname</th>
+        <th>torsite</th>
+        <th>torimdb</th>
+        <th>tmdbid</th>
+        <th>tmdbcat</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    $(document).ready(function () {
+      $('#data').DataTable({
+        ajax: '/api/data',
+        columns: [
+          {data: 'torname'},
+          {data: 'torsite', searchable: false},
+          {data: 'torimdb', orderable: false},
+          {data: 'tmdbid', orderable: false},
+          {data: 'tmdbcat'},
+        ],
+      });
+    });
+  </script>
+{% endblock %}

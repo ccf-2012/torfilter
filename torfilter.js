@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.16
+// @version      0.9.18
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -667,7 +667,7 @@ var config = [
     eleTorTable: "#torrent_table",
     eleCurPage: "#main_table > tbody > tr:nth-child(1) > td > p:nth-child(9) > a:nth-child(5) > b",
     eleTorList: "#torrent_table > tbody > tr",
-    eleTorItem: "td:nth-child(2) > div.name_left > a > b",
+    eleTorItem: "div.name_left > a",
     eleTorItemDesc: "td:nth-child(2) > div.name_left > a > b > span",
     eleTorItemSize: "td:nth-child(7)",
     eleTorItemSeednum: "td:nth-child(9) > b:nth-child(1)",
