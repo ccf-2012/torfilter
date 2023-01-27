@@ -16,7 +16,7 @@ db = SQLAlchemy(app)
 
 class TorMediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    addedon = db.Column(db.DateTime, default=datetime.now())
+    addedon = db.Column(db.DateTime, default=datetime.now)
     torname = db.Column(db.String(256), index=True)
     torsite = db.Column(db.String(64))
     torsiteid = db.Column(db.Integer)

@@ -28,6 +28,8 @@
     $(document).ready(function () {
       $('#data').DataTable({
         ajax: '/api/data',
+        serverSide: true,
+        order: [[6, 'desc']],
         columns: [
           {data: 'torname'},
           {data: 'location'},
