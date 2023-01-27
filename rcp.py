@@ -22,13 +22,15 @@ def runTorcp(torpath, torhash, torsize):
 
         targetDir = os.path.join(CONFIG.linkDir, torhash)
         argv = [npath, "-d", targetDir, "-s", 
-                "--lang", CONFIG.lang, 
                 "--tmdb-api-key", CONFIG.tmdb_api_key, 
                 "--tmdb-lang", CONFIG.tmdbLang, 
-                "--imdbid", torimdb, 
                 "--make-log", CONFIG.bracket, 
                 "-e", "srt",
                 "--extract-bdmv", "--tmdb-origin-name"]
+        if CONFIG.lang:
+            argv += ["--lang", CONFIG.lang]
+        if torimdb:
+            argv += ["--imdbid", torimdb]
         eo = TorcpItemDBObj(site, siteid, torimdb, torhash.strip(), int(torsize.strip()))
         o = Torcp()
         o.main(argv, eo)
