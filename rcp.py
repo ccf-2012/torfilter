@@ -51,7 +51,7 @@ def loadArgs():
     parser.add_argument('-I', '--info-hash', help='info hash of the torrent.')
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
-    parser.add_argument('-C', '--config', help='size of the torrent.')
+    parser.add_argument('-C', '--config', help='config file.')
 
     global ARGS
     ARGS = parser.parse_args()

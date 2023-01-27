@@ -1,6 +1,6 @@
 from ajax_table import TorMediaItem, TorcpItemDBObj, queryByHash
 from plexapi.server import PlexServer
-from myconfig import CONFIG
+from myconfig import CONFIG, readConfig
 import argparse
 import os
 
@@ -8,9 +8,10 @@ import os
 def main():
     parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
     parser.add_argument('-I', '--info-hash', type=str, required=True, help='info hash of the torrent.')
+    parser.add_argument('-C', '--config', help='config file.')
 
     ARGS = parser.parse_args()
-
+    readConfig(ARGS.config)
     plexSrv = PlexServer(CONFIG.plexServer, CONFIG.plexToken)
     mediaItem = queryByHash(ARGS.info_hash)
 
