@@ -20,7 +20,8 @@ def runTorcp(torpath, torhash, torsize):
             elif len(l) == 2:
                 site, siteid = l[0], l[1]
 
-        argv = [npath, "-d", CONFIG.linkDir, "-s", 
+        targetDir = os.path.join(CONFIG.linkDir, torhash)
+        argv = [npath, "-d", targetDir, "-s", 
                 "--lang", CONFIG.lang, 
                 "--tmdb-api-key", CONFIG.tmdb_api_key, 
                 "--tmdb-lang", CONFIG.tmdbLang, 
