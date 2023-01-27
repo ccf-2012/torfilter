@@ -15,18 +15,18 @@ def main():
     mediaItem = queryByHash(ARGS.info_hash)
 
     if mediaItem and plexSrv:
-        mediaPath = mediaItem.location
-        if mediaPath.startwith('TV/cn'):
+        mediaPath = mediaItem.location.strip()
+        if mediaPath.startswith('TV/cn'):
             lib = plexSrv.library.section('中文剧集')
-        elif mediaPath.startwith('TV/ja'):
+        elif mediaPath.startswith('TV/ja'):
             lib = plexSrv.library.section('日韩剧集')
-        elif mediaPath.startwith('TV/ko'):
+        elif mediaPath.startswith('TV/ko'):
             lib = plexSrv.library.section('日韩剧集')
-        elif mediaPath.startwith('TV/other'):
+        elif mediaPath.startswith('TV/other'):
             lib = plexSrv.library.section('剧集')
-        elif mediaPath.startwith('Movie/cn'):
+        elif mediaPath.startswith('Movie/cn'):
             lib = plexSrv.library.section('中文电影')
-        elif mediaPath.startwith('Movie'):
+        elif mediaPath.startswith('Movie'):
             lib = plexSrv.library.section('电影')
         else:
             return 
