@@ -4,15 +4,21 @@ from torcp.torcp import Torcp
 from myconfig import CONFIG
 import argparse
 
+def extractIMDbFromTag(tagstr):
+    imdbtag = ''
+    if ',' in tagstr:
+        tagList = tagstr.split(',')
+        imdbtag = next((x for x in tagList if x.startswith('tt')), '')
+    return imdbtag
 
-def runTorcp(torpath, torhash, torsize):
+def runTorcp(torpath, torhash, torsize, tortag):
     if torpath and torhash and torsize:
         npath = os.path.normpath(torpath.strip())
         torname = os.path.basename(npath)
         site_id_imdb = os.path.basename(os.path.dirname(npath))
         site = ''
         siteid = ''
-        torimdb = ''
+        torimdb = extractIMDbFromTag(tortag)
         if "_" in site_id_imdb:
             l = site_id_imdb.split("_")
             if len(l) == 3:
@@ -51,7 +57,7 @@ def loadArgs():
 
 def main():
     loadArgs()
-    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size)
+    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag)
 
 
 if __name__ == '__main__':
