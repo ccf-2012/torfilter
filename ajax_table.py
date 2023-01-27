@@ -70,8 +70,8 @@ class TorcpItemDBObj:
 
 def queryByHash(qbhash):
     with app.app_context():
-        query = db.session.query(TorMediaItem).filter(TorMediaItem.torhash == qbhash)
-        return query[0] if len(query) > 0 else None
+        query = db.session.query(TorMediaItem).filter(TorMediaItem.torhash == qbhash).first()
+        return query
 
 
 @app.route('/')
