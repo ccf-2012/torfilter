@@ -5,10 +5,10 @@ from myconfig import CONFIG
 import argparse
 
 def extractIMDbFromTag(tagstr):
-    imdbtag = ''
+    tagList = []
     if ',' in tagstr:
         tagList = tagstr.split(',')
-        imdbtag = next((x for x in tagList if x.startswith('tt')), '')
+    imdbtag = next((x for x in tagList if x.startswith('tt')), '')
     return imdbtag
 
 def runTorcp(torpath, torhash, torsize, tortag):
