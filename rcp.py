@@ -6,7 +6,7 @@ import argparse
 
 def extractIMDbFromTag(tagstr):
     tagList = []
-    if tagstr and ',' in tagstr:
+    if tagstr:
         tagList = tagstr.split(',')
     imdbtag = next((x for x in tagList if x.startswith('tt')), '')
     return imdbtag
