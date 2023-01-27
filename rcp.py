@@ -51,6 +51,7 @@ def loadArgs():
     parser.add_argument('-I', '--info-hash', help='info hash of the torrent.')
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
+    parser.add_argument('-C', '--config', help='size of the torrent.')
 
     global ARGS
     ARGS = parser.parse_args()
@@ -58,7 +59,7 @@ def loadArgs():
 
 def main():
     loadArgs()
-    readConfig()
+    readConfig(ARGS.config)
     runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag)
 
 

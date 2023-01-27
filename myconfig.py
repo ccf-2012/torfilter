@@ -21,9 +21,9 @@ class configData():
     lang = 'cn,ja,ko'
 
 CONFIG = configData()
-def readConfig():
+def readConfig(cfgFile):
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(cfgFile)
 
     # CONFIG.interval = config['PLEX'].getint('interval', 3)
     # 'http://{}:{}'.format(ip, port)
