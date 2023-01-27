@@ -43,9 +43,9 @@ def readConfig():
     if 'TORCP' in config:
         CONFIG.linkDir = config['TORCP'].get('linkdir', '')
         CONFIG.bracket = config['TORCP'].get('bracket', '')
+        if not CONFIG.bracket.startswith('--'):
+            CONFIG.bracket = '--' + CONFIG.bracket
         CONFIG.tmdbLang = config['TORCP'].get('tmdb_lang', 'en')
-        if not CONFIG.tmdbLang.startswith('--'):
-            CONFIG.tmdbLang = '--' + CONFIG.tmdbLang
         CONFIG.lang = config['TORCP'].get('lang', 'cn,ja,ko')
 
     if 'QBIT' in config:
