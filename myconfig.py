@@ -4,6 +4,7 @@ class configData():
     interval = 3
     plexServer = ''
     plexToken = ''
+    plexRootDir=''
     embyServer = ''
     embyUser = ''
     embyPass = ''
@@ -31,6 +32,7 @@ def readConfig():
         CONFIG.plexServer = config['PLEX'].get('server_url', '')
         # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
         CONFIG.plexToken = config['PLEX'].get('server_token', '')
+        CONFIG.plexRootDir = config['PLEX'].get('rootdir', '')
 
     if 'EMBY' in config:
         CONFIG.embyServer = config['EMBY'].get('server_url', '')

@@ -2,6 +2,8 @@ from ajax_table import TorMediaItem, TorcpItemDBObj, queryByHash
 from plexapi.server import PlexServer
 from myconfig import CONFIG
 import argparse
+import os
+
 
 def main():
     parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
@@ -30,7 +32,7 @@ def main():
             return 
 
     if lib:
-        lib.update(path=mediaPath)
+        lib.update(path=os.path.join(CONFIG.plexRootDir, mediaPath))
     else:
         print("Can't find the library section: " + ARGS.library)
 
