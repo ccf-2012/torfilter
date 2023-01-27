@@ -1,19 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="table-responsive my-3">
+
   <table id="data" class="table table-striped">
     <thead>
       <tr>
         <th>torname</th>
+        <th>location</th>
         <th>torsite</th>
         <th>torimdb</th>
         <th>tmdbid</th>
         <th>tmdbcat</th>
+        <th>added on</th>
       </tr>
     </thead>
     <tbody>
     </tbody>
   </table>
+  
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -23,10 +30,12 @@
         ajax: '/api/data',
         columns: [
           {data: 'torname'},
+          {data: 'location'},
           {data: 'torsite', searchable: false},
           {data: 'torimdb', orderable: false},
           {data: 'tmdbid', orderable: false},
           {data: 'tmdbcat'},
+          {data: 'addedon'},
         ],
       });
     });

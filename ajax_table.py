@@ -3,6 +3,7 @@
 from flask import Flask, render_template, jsonify
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 import sys
 import os
 from torcp.torcp import Torcp
@@ -15,6 +16,7 @@ db = SQLAlchemy(app)
 
 class TorMediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    addedon = db.Column(db.DateTime, default=datetime.now())
     torname = db.Column(db.String(256), index=True)
     torsite = db.Column(db.String(64))
     torsiteid = db.Column(db.Integer)
@@ -30,13 +32,14 @@ class TorMediaItem(db.Model):
     def to_dict(self):
         return {
             'torname': self.torname,
+            'addedon': self.addedon,
             'torsite': self.torsite,
             'torsiteid': self.torsiteid,
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
             'tmdbid': self.tmdbid,
             'tmdbcat': self.tmdbcat,
-
+            'location': self.location,
         }
 
 
@@ -112,4 +115,4 @@ def runTorcp():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5006, debug=True)
