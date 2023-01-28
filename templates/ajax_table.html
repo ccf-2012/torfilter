@@ -39,6 +39,7 @@
               if (data) {
                 return '<a href="'+data+'" target="_blank">'+row.torabbrev+'</a>';
               }
+              else return ''
             }
           },
           {data: 'torimdb', orderable: false,
@@ -46,6 +47,7 @@
               if (data){
                 return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
               }
+              else return ''
             }
           },
           {data: 'tmdbid', orderable: false,
@@ -54,6 +56,7 @@
                 var s = row.tmdbcat + '/' + row.tmdbid;
                 return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s+'</a>';
               }
+              else return ''
             }
           },
           {data: 'addedon'},
