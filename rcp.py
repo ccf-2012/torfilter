@@ -35,26 +35,22 @@ def tryint(instr):
 
 
 def  getSiteIdDirName(pathStr, savepath):
-    if os.path.isdir(pathStr):
-        return os.path.basename(os.path.dirname(pathStr))
-    else:
-        return os.path.basename(os.path.normpath(savepath))
-        # relativePath = os.path.relpath(pathStr, savepath)
-        # l = relativePath.split(os.path.sep)
-        
-        # return l[0] if len(l) > 0 else relativePath
+    npath = os.path.normpath(pathStr.strip())
+    siteIdFolder = os.path.basename(os.path.normpath(savepath))
+    relativePath = os.path.relpath(npath, savepath)
+    l = relativePath.split(os.path.sep)
+    torRootFolder = os.path.join(savepath, l[0]) if len(l) > 0 else npath
+    return torRootFolder, siteIdFolder
         
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath):
     print("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" % (torpath, torhash, torsize, tortag, savepath))
     if torpath and torhash and torsize:
-        npath = os.path.normpath(torpath.strip())
-        # torname = os.path.basename(npath)
         torimdb = extractIMDbFromTag(tortag)
-        site_id_imdb = getSiteIdDirName(npath, savepath)
+        rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
         site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
         targetDir = os.path.join(CONFIG.linkDir, torhash)
-        argv = [npath, "-d", targetDir, "-s",
+        argv = [rootdir, "-d", targetDir, "-s",
                 "--tmdb-api-key", CONFIG.tmdb_api_key,
                 "--tmdb-lang", CONFIG.tmdbLang,
                 "--make-log", 
