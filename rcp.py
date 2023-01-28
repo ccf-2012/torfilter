@@ -1,4 +1,4 @@
-from torcp_server import TorMediaItem, TorcpItemDBObj, queryByHash
+from cplist import TorMediaItem, TorcpItemDBObj, queryByHash
 import os
 from torcp.torcp import Torcp
 from myconfig import readConfig, CONFIG
@@ -35,6 +35,7 @@ def tryint(instr):
 
 
 def runTorcp(torpath, torhash, torsize, tortag):
+    print("torpath: %s, torhash: %s, torsize: %s, tortag: %s" % (torpath, torhash, torsize, tortag))
     if torpath and torhash and torsize:
         npath = os.path.normpath(torpath.strip())
         # torname = os.path.basename(npath)

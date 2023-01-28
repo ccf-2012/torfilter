@@ -28,6 +28,7 @@
     $(document).ready(function () {
       $('#data').DataTable({
         ajax: '/api/data',
+        "pageLength": 25,        
         serverSide: true,
         order: [[6, 'desc']],
         columns: [

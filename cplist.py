@@ -7,11 +7,15 @@ from datetime import datetime
 import sys
 import os
 from torcp.torcp import Torcp
+import logging
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
