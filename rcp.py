@@ -34,13 +34,24 @@ def tryint(instr):
     return string_int
 
 
-def runTorcp(torpath, torhash, torsize, tortag):
-    print("torpath: %s, torhash: %s, torsize: %s, tortag: %s" % (torpath, torhash, torsize, tortag))
+def  getSiteIdDirName(pathStr, savepath):
+    if os.path.isdir(pathStr):
+        return os.path.basename(os.path.dirname(pathStr))
+    else:
+        return os.path.basename(os.path.normpath(savepath))
+        # relativePath = os.path.relpath(pathStr, savepath)
+        # l = relativePath.split(os.path.sep)
+        
+        # return l[0] if len(l) > 0 else relativePath
+        
+
+def runTorcp(torpath, torhash, torsize, tortag, savepath):
+    print("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" % (torpath, torhash, torsize, tortag, savepath))
     if torpath and torhash and torsize:
         npath = os.path.normpath(torpath.strip())
         # torname = os.path.basename(npath)
         torimdb = extractIMDbFromTag(tortag)
-        site_id_imdb = os.path.basename(os.path.dirname(npath))
+        site_id_imdb = getSiteIdDirName(npath, savepath)
         site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
         targetDir = os.path.join(CONFIG.linkDir, torhash)
         argv = [npath, "-d", targetDir, "-s",
@@ -64,11 +75,13 @@ def runTorcp(torpath, torhash, torsize, tortag):
     return 401
 
 
+
 def loadArgs():
     parser = argparse.ArgumentParser(
         description='wrapper to TORCP to save log in sqlite db.')
     parser.add_argument('-F', '--full-path', help='full torrent save path.')
     parser.add_argument('-I', '--info-hash', help='info hash of the torrent.')
+    parser.add_argument('-D', '--save-path', help='qbittorrent save path.')
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
     parser.add_argument('-C', '--config', help='config file.')
@@ -76,11 +89,11 @@ def loadArgs():
     global ARGS
     ARGS = parser.parse_args()
 
-
+    
 def main():
     loadArgs()
     readConfig(ARGS.config)
-    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag)
+    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag, ARGS.save_path)
 
 
 if __name__ == '__main__':
