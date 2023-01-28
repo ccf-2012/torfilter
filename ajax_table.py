@@ -17,13 +17,18 @@ db = SQLAlchemy(app)
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
     SITE_URL_PREFIX = {
         'pter': 'https://pterclub.com/details.php?id=',
+        'pterclub': 'https://pterclub.com/details.php?id=',
         'aud': 'https://audiences.me/details.php?id=',
+        'audiences': 'https://audiences.me/details.php?id=',
         'chd': 'https://chdbits.co/details.php?id=',
+        'chdbits': 'https://chdbits.co/details.php?id=',
         'lhd': 'https://lemonhd.org/',
         'hds': 'https://hdsky.me/details.php?id=',
+        'hdsky': 'https://hdsky.me/details.php?id=',
         'ob': 'https://ourbits.club/details.php?id=',
         'ssd': 'https://springsunday.net/details.php?id=',
         'frds': 'https://pt.keepfrds.com/details.php?id=',
+        'hh': 'https://hhanclub.top/details.php?id=',
         'ttg': 'https://totheglory.im/t/',
         }
     detailUrl = ''
