@@ -84,7 +84,48 @@ def index():
 
 @app.route('/api/data')
 def data():
-    return {'data': [tor.to_dict() for tor in TorMediaItem.query]}
+    query = TorMediaItem.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            TorMediaItem.torname.like(f'%{search}%'),
+            TorMediaItem.location.like(f'%{search}%')
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        col_name = request.args.get(f'columns[{col_index}][data]')
+        if col_name not in ['torname', 'torsite', 'addedon', 'torsize']:
+            col_name = 'name'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(TorMediaItem, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        query = query.order_by(*order)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [user.to_dict() for user in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': TorMediaItem.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
 
 
 @app.route('/api/torcp', methods=['POST'])

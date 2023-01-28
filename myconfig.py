@@ -5,6 +5,7 @@ class configData():
     plexServer = ''
     plexToken = ''
     plexRootDir=''
+    plexSectionList = []
     embyServer = ''
     embyUser = ''
     embyPass = ''
@@ -32,6 +33,17 @@ def readConfig(cfgFile):
         # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
         CONFIG.plexToken = config['PLEX'].get('server_token', '')
         CONFIG.plexRootDir = config['PLEX'].get('rootdir', '')
+    
+    if 'PLEX_SECTION' in config:
+        configitems = config.items('PLEX_SECTION')
+        for key,value in configitems:
+            if ',' in value:
+                CONFIG.plexSectionList += [(key, subval.strip()) for subval in value.split(',')]
+            else:
+                CONFIG.plexSectionList.append((key, value))
+        # print(configitems)
+        # CONFIG.plexSectionList = [(key, value) for key,value in configitems ]
+            #   config['PLEX'].get('sectionList', '')
 
     if 'EMBY' in config:
         CONFIG.embyServer = config['EMBY'].get('server_url', '')

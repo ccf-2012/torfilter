@@ -8,6 +8,8 @@ import time
 
 MAX_RETRY = 5
 
+# sectionMatchList = [('TV/cn', '中文剧集'), ('TV/ja', '日韩剧集'), ('TV/ko', '日韩剧集'), ('TV/other', '剧集'), ('Movie/cn', '中文电影'), ('Movie', '电影')]
+
 def main():
     parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
     parser.add_argument('-I', '--info-hash', type=str, required=True, help='info hash of the torrent.')
@@ -20,18 +22,9 @@ def main():
 
     if mediaItem and plexSrv:
         mediaPath = mediaItem.location.strip()
-        if mediaPath.startswith('TV/cn'):
-            lib = plexSrv.library.section('中文剧集')
-        elif mediaPath.startswith('TV/ja'):
-            lib = plexSrv.library.section('日韩剧集')
-        elif mediaPath.startswith('TV/ko'):
-            lib = plexSrv.library.section('日韩剧集')
-        elif mediaPath.startswith('TV/other'):
-            lib = plexSrv.library.section('剧集')
-        elif mediaPath.startswith('Movie/cn'):
-            lib = plexSrv.library.section('中文电影')
-        elif mediaPath.startswith('Movie'):
-            lib = plexSrv.library.section('电影')
+        libtup = next((g for g in CONFIG.plexSectionList if mediaPath.startswith(g[1])), None)
+        if libtup:
+            lib = plexSrv.library.section(libtup[0])
         else:
             print("Can't match any library: " + mediaPath)
             return 
@@ -45,7 +38,7 @@ def main():
                     if n < MAX_RETRY:
                         print('Fail: lib.update' + str(e))
                         print('retry %d time.' % (n+1))
-                        time.sleep(3)
+                        time.sleep(30)
                     else:
                         print('Error: MAX_RETRY(%d) times' % (MAX_RETRY))
                         os._exit(1)
