@@ -1,4 +1,4 @@
-from ajax_table import TorMediaItem, TorcpItemDBObj, queryByHash
+from torcp_server import TorMediaItem, TorcpItemDBObj, queryByHash
 import os
 from torcp.torcp import Torcp
 from myconfig import readConfig, CONFIG

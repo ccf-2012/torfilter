@@ -1,4 +1,4 @@
-from ajax_table import TorMediaItem, TorcpItemDBObj, queryByHash
+from torcp_server import TorMediaItem, TorcpItemDBObj, queryByHash
 from plexapi.server import PlexServer
 from myconfig import CONFIG, readConfig
 import argparse
