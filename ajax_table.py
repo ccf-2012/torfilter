@@ -24,7 +24,9 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         'ob': 'https://ourbits.club/details.php?id=',
         'ssd': 'https://springsunday.net/details.php?id=',
         'frds': 'https://pt.keepfrds.com/details.php?id=',
+        'ttg': 'https://totheglory.im/t/',
         }
+    detailUrl = ''
     if siteAbbrev in SITE_URL_PREFIX:
         if siteAbbrev == 'lhd':
             if sitecat == 'movie':
