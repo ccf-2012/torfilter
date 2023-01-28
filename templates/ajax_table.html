@@ -3,7 +3,7 @@
 {% block content %}
 <div class="table-responsive my-3">
 
-  <table id="data" width="100%" style="table-layout: fixed;" class="table table-striped">
+  <table id="data"  class="table table-striped">
     <thead>
       <tr>
         <th>cat</th>
@@ -43,7 +43,6 @@
           },
         ajax: '/api/data',
         "pageLength": 25,
-        dom: '<"top"ip>rt<"bottom"flp><"clear">',
         autoWidth: true,
         scrollX: true,
         full_row_select: false,
