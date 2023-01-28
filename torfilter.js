@@ -36,6 +36,8 @@
 // @match        https://hhanclub.top/details.php*
 // @match        https://lemonhd.org/torrents*
 // @match        https://lemonhd.org/details*
+// @match        https://hdhome.org/torrents.php*
+// @match        https://hdhome.org/details.php*
 
 // ==/UserScript==
 
@@ -515,6 +517,53 @@ const lhd_passkey = async () => {
   return "";
 };
 
+//  ====== hdh
+const hdh_imdbval = (element) => {
+  var t = $(element).find(
+    "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)"
+  );
+  return t.text();
+};
+const hdh_imdbid = (element) => {
+  var t = $(element)
+    .find(
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)"
+    )
+    .attr("href");
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
+const hdh_douban = (element) => {
+  var d = $(element).find(
+    "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(1)"
+  );
+  return d.text();
+};
+const hdh_seeding = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  return d.text().includes("100%");
+};
+
+const hdh_downed = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  // return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
+  return d.text() != "--";
+};
+const hdh_passkey = async () => {
+  let html =  await $.get("usercp.php")
+  // debugger;
+  // $(html).find("#passkey").css("display", "");
+  let passkeyRow = $(html).find("#passkey");
+  if (passkeyRow.length > 0){
+      let key = passkeyRow.text().replace('（妥善保管，请勿泄露）', '');
+      return "&passkey=" + key.trim() + "&https=1" ;
+  }
+  return "" ;
+};
+
 
 var config = [
   {
@@ -856,6 +905,34 @@ var config = [
     funcDownloaded: lhd_downed,
     funcGetPasskey: lhd_passkey,
   },
+  {
+    host: "hdhome.org",
+    abbrev: "hdh",
+    eleTorTable: "#torrenttable",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(2) > font",
+    eleTorList: "#torrenttable > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "span.tgf",
+    eleCnLangTag: "span.tgy",
+    eleCnSubTag: "span.tzz",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: hdh_imdbval,
+    funcIMDbId: hdh_imdbid,
+    funcDouban: hdh_douban,
+    funcSeeding: hdh_seeding,
+    funcDownloaded: hdh_downed,
+    funcGetPasskey: hdh_passkey,
+  }, 
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
