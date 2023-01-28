@@ -14,9 +14,31 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
+def genSiteLink(siteAbbrev, siteid, sitecat=''):
+    SITE_URL_PREFIX = {
+        'pter': 'https://pterclub.com/details.php?id=',
+        'aud': 'https://audiences.me/details.php?id=',
+        'chd': 'https://chdbits.co/details.php?id=',
+        'lhd': 'https://lemonhd.org/',
+        'hds': 'https://hdsky.me/details.php?id=',
+        'ob': 'https://ourbits.club/details.php?id=',
+        'ssd': 'https://springsunday.net/details.php?id=',
+        'frds': 'https://pt.keepfrds.com/details.php?id=',
+        }
+    if siteAbbrev in SITE_URL_PREFIX:
+        if siteAbbrev == 'lhd':
+            if sitecat == 'movie':
+                detailUrl = SITE_URL_PREFIX[siteAbbrev] + 'details_movie.php?id=' + str(siteid)
+            elif sitecat == 'tvseries':
+                detailUrl = SITE_URL_PREFIX[siteAbbrev] + 'details_tv.php?id=' + str(siteid)
+        else:
+            detailUrl = SITE_URL_PREFIX[siteAbbrev] + str(siteid)
+    return detailUrl if detailUrl else '#'
+
+
 class TorMediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    addedon = db.Column(db.DateTime, default=datetime.now)
+    addedon = db.Column(db.DateTime, default=datetime.utcnow)
     torname = db.Column(db.String(256), index=True)
     torsite = db.Column(db.String(64))
     torsiteid = db.Column(db.Integer)
@@ -33,11 +55,11 @@ class TorMediaItem(db.Model):
         return {
             'torname': self.torname,
             'addedon': self.addedon,
-            'torsite': self.torsite,
-            'torsiteid': self.torsiteid,
+            'torabbrev': self.torsite,
+            'torsite': genSiteLink(self.torsite,self.torsiteid),
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
-            'tmdbid': self.tmdbid,
+            'tmdbid': str(self.tmdbid),
             'tmdbcat': self.tmdbcat,
             'location': self.location,
         }
@@ -80,6 +102,11 @@ def queryByHash(qbhash):
 @app.route('/')
 def index():
     return render_template('ajax_table.html', title='Ajax Table')
+
+@app.route('/url/detail')
+def siteDetail(siteAbbrev, siteid):
+
+    return 
 
 
 @app.route('/api/data')

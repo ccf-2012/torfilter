@@ -6,12 +6,12 @@
   <table id="data" class="table table-striped">
     <thead>
       <tr>
+        <th>cat</th>
         <th>torname</th>
         <th>location</th>
         <th>torsite</th>
         <th>torimdb</th>
         <th>tmdbid</th>
-        <th>tmdbcat</th>
         <th>added on</th>
       </tr>
     </thead>
@@ -31,12 +31,31 @@
         serverSide: true,
         order: [[6, 'desc']],
         columns: [
+          {data: 'tmdbcat'},
           {data: 'torname'},
           {data: 'location'},
-          {data: 'torsite', searchable: false},
-          {data: 'torimdb', orderable: false},
-          {data: 'tmdbid', orderable: false},
-          {data: 'tmdbcat'},
+          {data: 'torsite', searchable: false, 
+            "render": function ( data, type, row, meta ) {
+              if (data) {
+                return '<a href="'+data+'" target="_blank">'+row.torabbrev+'</a>';
+              }
+            }
+          },
+          {data: 'torimdb', orderable: false,
+            "render": function ( data, type, row, meta ) {
+              if (data){
+                return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
+              }
+            }
+          },
+          {data: 'tmdbid', orderable: false,
+            "render": function ( data, type, row, meta ) {
+              if (data){
+                var s = row.tmdbcat + '/' + row.tmdbid;
+                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s+'</a>';
+              }
+            }
+          },
           {data: 'addedon'},
         ],
       });
