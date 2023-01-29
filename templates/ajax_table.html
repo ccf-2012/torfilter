@@ -3,16 +3,16 @@
 {% block content %}
 <div class="table-responsive my-3">
 
-  <table id="data"  class="table table-striped">
+  <table id="data" width="100%" style="table-layout: fixed;"  class="table table-striped">
     <thead>
       <tr>
-        <th>cat</th>
-        <th>torname</th>
-        <th>location</th>
-        <th>torsite</th>
-        <th>torimdb</th>
-        <th>tmdbid</th>
-        <th>added on</th>
+        <th>类别</th>
+        <th>种子标题</th>
+        <th>torcp后路径</th>
+        <th>源站</th>
+        <th>IMDb</th>
+        <th>TMDb</th>
+        <th>添加于</th>
       </tr>
     </thead>
     <tbody>
@@ -42,6 +42,9 @@
                 }
           },
         ajax: '/api/data',
+        "dom": `<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'f>>
+            <'row'<'col-sm-12'tr>>
+            <'row'<'col-sm-12 col-md-5'l><'col-sm-12 col-md-7'p>>`,        
         "pageLength": 25,
         autoWidth: true,
         scrollX: true,
@@ -49,10 +52,17 @@
         serverSide: true,
         order: [[6, 'desc']],
         columns: [
-          {data: 'tmdbcat'},
-          {data: 'torname'},
-          {data: 'location'},
+          {data: 'tmdbcat',
+           "width": "5%" 
+          },
+          {data: 'torname',
+          "width": "20%"
+          },
+          {data: 'location',
+          "width": "25%" 
+          },
           {data: 'torsite', searchable: false, 
+            "width": "8%",
             "render": function ( data, type, row, meta ) {
               if (data) {
                 return '<a href="'+data+'" target="_blank">'+row.torabbrev+'</a>';
@@ -61,6 +71,7 @@
             }
           },
           {data: 'torimdb', orderable: false,
+            "width": "8%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
@@ -69,6 +80,7 @@
             }
           },
           {data: 'tmdbid', orderable: false,
+            "width": "10%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
@@ -77,7 +89,9 @@
               else return ''
             }
           },
-          {data: 'addedon'},
+          {data: 'addedon',
+            "width": "14%",
+          },
         ],
       });
     });

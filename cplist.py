@@ -8,6 +8,14 @@ import sys
 import os
 from torcp.torcp import Torcp
 import logging
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+
+#### TODO: Change this!
+users = {
+    "abcde": generate_password_hash("Href119"),
+    "root": generate_password_hash("aJax110")
+}
 
 
 app = Flask(__name__)
@@ -16,7 +24,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
-
+auth = HTTPBasicAuth()
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
     SITE_URL_PREFIX = {
@@ -110,7 +118,15 @@ def queryByHash(qbhash):
         return query
 
 
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and \
+            check_password_hash(users.get(username), password):
+        return username
+
+
 @app.route('/')
+@auth.login_required
 def index():
     return render_template('ajax_table.html', title='Ajax Table')
 
@@ -119,8 +135,22 @@ def siteDetail(siteAbbrev, siteid):
 
     return 
 
+@app.route('/editconf', methods=['POST', 'GET'])
+@auth.login_required
+def editconf():
+    # fn = 'config.ini'
+    # with open(fn, 'r') as f:
+    #     config_ini = f.read()
+    # if request.method == 'POST':
+    #     config_ini = request.form['text_box']
+    #     with open(fn, 'w') as f:
+    #         f.write(str(config_ini))
+    config_ini = 'under construction....'
+    return render_template('edit_config.html', config_file=config_ini)
+
 
 @app.route('/api/data')
+@auth.login_required
 def data():
     query = TorMediaItem.query
 
@@ -166,7 +196,9 @@ def data():
     }
 
 
+
 @app.route('/api/torcp', methods=['POST'])
+@auth.login_required
 def runTorcp():
     if 'torpath' in request.json and 'torhash' in request.json and 'torsize' in request.json:
         npath = os.path.normpath(request.json['torpath'].strip())
