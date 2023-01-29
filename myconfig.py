@@ -20,6 +20,8 @@ class configData():
     bracket = ''
     tmdbLang = 'en'
     lang = 'cn,ja,ko'
+    basicAuthUser = ''
+    basicAuthPass = ''
 
 CONFIG = configData()
 def readConfig(cfgFile):
@@ -28,6 +30,10 @@ def readConfig(cfgFile):
 
     # CONFIG.interval = config['PLEX'].getint('interval', 3)
     # 'http://{}:{}'.format(ip, port)
+    if 'AUTH' in config:
+        CONFIG.basicAuthUser = config['AUTH'].get('user', '')
+        CONFIG.basicAuthPass = config['AUTH'].get('pass', '')
+
     if 'PLEX' in config:
         CONFIG.plexServer = config['PLEX'].get('server_url', '')
         # https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
@@ -70,4 +76,21 @@ def readConfig(cfgFile):
         CONFIG.addPause = config['QBIT'].getboolean('pause', False)
         CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
+
+def generatePassword(cfgFile):
+    config = configparser.ConfigParser()
+    config.read(cfgFile)
+    # https://stackoverflow.com/questions/3854692/generate-password-in-python
+    import secrets
+    CONFIG.basicAuthUser = 'admin'
+    CONFIG.basicAuthPass = secrets.token_urlsafe(12)
+    if not config.has_section('AUTH'):
+        config.add_section('AUTH')
+    config.set('AUTH', 'user', CONFIG.basicAuthUser)
+    config.set('AUTH', 'pass', CONFIG.basicAuthPass)
+
+    print('config file: %s' % cfgFile)
+    print("username: %s \npassword: %s" % (CONFIG.basicAuthUser, CONFIG.basicAuthPass))
+    with open(cfgFile, 'w') as f:
+        config.write(f)
 

@@ -9,13 +9,8 @@ import os
 from torcp.torcp import Torcp
 import logging
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import generate_password_hash, check_password_hash
-
-#### TODO: Change this!
-users = {
-    "abcde": generate_password_hash("Href119"),
-    "root": generate_password_hash("aJax110")
-}
+import myconfig
+import argparse
 
 
 app = Flask(__name__)
@@ -29,14 +24,10 @@ auth = HTTPBasicAuth()
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
     SITE_URL_PREFIX = {
         'pter': 'https://pterclub.com/details.php?id=',
-        'pterclub': 'https://pterclub.com/details.php?id=',
         'aud': 'https://audiences.me/details.php?id=',
-        'audiences': 'https://audiences.me/details.php?id=',
         'chd': 'https://chdbits.co/details.php?id=',
-        'chdbits': 'https://chdbits.co/details.php?id=',
         'lhd': 'https://lemonhd.org/',
         'hds': 'https://hdsky.me/details.php?id=',
-        'hdsky': 'https://hdsky.me/details.php?id=',
         'ob': 'https://ourbits.club/details.php?id=',
         'ssd': 'https://springsunday.net/details.php?id=',
         'frds': 'https://pt.keepfrds.com/details.php?id=',
@@ -120,8 +111,7 @@ def queryByHash(qbhash):
 
 @auth.verify_password
 def verify_password(username, password):
-    if username in users and \
-            check_password_hash(users.get(username), password):
+    if username == myconfig.CONFIG.basicAuthUser and password == myconfig.CONFIG.basicAuthPass:
         return username
 
 
@@ -225,5 +215,29 @@ def runTorcp():
     return jsonify({'Error': 401}), 401
 
 
-if __name__ == '__main__':
+def loadArgs():
+    parser = argparse.ArgumentParser(
+        description='TORCP web ui.')
+    parser.add_argument('-C', '--config', help='config file.')
+    parser.add_argument('-G', '--init-password', action='store_true', help='init pasword.')
+
+    global ARGS
+    ARGS = parser.parse_args()
+    if not ARGS.config:
+        ARGS.config = os.path.join(os.getcwd(), 'config.ini')
+
+
+def main():
+    loadArgs()
+    myconfig.readConfig(ARGS.config)
+    if ARGS.init_password:
+        myconfig.generatePassword(ARGS.config)
+        return
+    if not myconfig.CONFIG.basicAuthUser or not myconfig.CONFIG.basicAuthPass:
+        print('set user/pasword in config.ini or use "-G" argument')
+        return
     app.run(host='0.0.0.0', port=5006, debug=True)
+
+
+if __name__ == '__main__':
+    main()

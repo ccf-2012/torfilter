@@ -10,12 +10,20 @@ MAX_RETRY = 5
 
 # sectionMatchList = [('TV/cn', '中文剧集'), ('TV/ja', '日韩剧集'), ('TV/ko', '日韩剧集'), ('TV/other', '剧集'), ('Movie/cn', '中文电影'), ('Movie', '电影')]
 
-def main():
+
+def loadArgs():
     parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
     parser.add_argument('-I', '--info-hash', type=str, required=True, help='info hash of the torrent.')
     parser.add_argument('-C', '--config', help='config file.')
 
+    global ARGS
     ARGS = parser.parse_args()
+    if not ARGS.config:
+        ARGS.config = os.path.join(os.getcwd(), 'config.ini')
+
+
+def main():
+    loadArgs()
     readConfig(ARGS.config)
     plexSrv = PlexServer(CONFIG.plexServer, CONFIG.plexToken)
     mediaItem = queryByHash(ARGS.info_hash)

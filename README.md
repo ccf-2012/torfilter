@@ -184,6 +184,84 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 * dupapi接受浏览器插件torfilter连接，会连themoviedb.org查TMDb，会连qbit下载器进行下载；所以需三方网络都通，特别地，连接TMDb查询，可能需配置 host 或 梯；
 * dupapi当前对于剧集，没有分辨季与集，只要有就判重，可在详情页手动点下载。
 
+
+-----
+
+# cplist
+* 当前为 torcp 的 webui
+* 默认使用脚本所在当前目录下的 `config.ini` 文件
+* 初次使用时，以 `-G` 参数执行，以获得初始用户名密码，如下：
+```sh
+python3 cplist.py -G
+```
+
+
+## 使用
+```
+python3 cplist.py -h
+usage: cplist.py [-h] [-C CONFIG] [-G]
+
+TORCP web ui.
+
+options:
+  -h, --help            show this help message and exit
+  -C CONFIG, --config CONFIG
+                        config file.
+  -G, --init-password   init pasword.
+```
+
+-----
+
+# rcp.py
+* 解析 qbit 完成后执行脚本传来的参数，调用 torcp 进行目录组织链接，并以数据库存储记录
+* 如果在加种子时建立了类如 'site-12345-tt123456' 这样的 SiteID 目录，则会提取其中的信息存入数据库
+* 默认使用脚本所在当前目录下的 `config.ini` 文件
+* 设置 config.ini 中的 `TORCP` 和 `TMDB` 
+
+## 使用
+```
+python3 rcp.py -h
+usage: rcp.py [-h] [-F FULL_PATH] [-I INFO_HASH] [-D SAVE_PATH] [-G TAG] [-Z SIZE] [-C CONFIG]
+
+wrapper to TORCP to save log in sqlite db.
+
+options:
+  -h, --help            show this help message and exit
+  -F FULL_PATH, --full-path FULL_PATH
+                        full torrent save path.
+  -I INFO_HASH, --info-hash INFO_HASH
+                        info hash of the torrent.
+  -D SAVE_PATH, --save-path SAVE_PATH
+                        qbittorrent save path.
+  -G TAG, --tag TAG     tag of the torrent.
+  -Z SIZE, --size SIZE  size of the torrent.
+  -C CONFIG, --config CONFIG
+                        config file.
+```
+
+-----
+
+# notify_plex.py
+* 种子完成后上传 gd 盘，Plex 无法感知，以此脚本进行通知
+* 此脚本从本地数据库中获得 torcp 重组生成的媒体路径，以Plex api进行通知
+* 默认使用脚本所在当前目录下的 `config.ini` 文件
+* 设置 config.ini 中的 `PLEX_SECTION` 和 `PLEX` 
+
+## 使用
+```
+python3 notify_plex.py -h
+usage: notify_plex.py [-h] -I INFO_HASH [-C CONFIG]
+
+Notify plex server to add a file/folder.
+
+options:
+  -h, --help            show this help message and exit
+  -I INFO_HASH, --info-hash INFO_HASH
+                        info hash of the torrent.
+  -C CONFIG, --config CONFIG
+                        config file.
+```
+
 -----
 
 # torss
