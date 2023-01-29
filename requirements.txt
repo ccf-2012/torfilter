@@ -1,10 +1,11 @@
 sqlalchemy<2.0
 Flask-SQLAlchemy
-torcp
+flask_httpauth
+torcp>=0.58
 plexapi
 flask
 qbittorrent-api
-tmdbv3api
+tmdbv3api>=1.7.7
 requests
 urllib3
 feedparser
