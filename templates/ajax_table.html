@@ -8,7 +8,7 @@
       <tr>
         <th>类别</th>
         <th>种子标题</th>
-        <th>torcp后路径</th>
+        <th>生成路径</th>
         <th>源站</th>
         <th>IMDb</th>
         <th>TMDb</th>
@@ -56,7 +56,7 @@
            "width": "5%" 
           },
           {data: 'torname',
-          "width": "20%"
+          "width": "25%"
           },
           {data: 'location',
           "width": "25%" 
@@ -84,7 +84,7 @@
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
-                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s+'</a>';
+                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+row.tmdbid+'</a>';
               }
               else return ''
             }
