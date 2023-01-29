@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="table-responsive my-3">
+<div class="table-responsive my-2 mx-1">
 
   <table id="data" width="100%" style="table-layout: fixed;"  class="table table-striped">
     <thead>
@@ -53,16 +53,16 @@
         order: [[6, 'desc']],
         columns: [
           {data: 'tmdbcat',
-           "width": "5%" 
+           "width": "4%" 
           },
           {data: 'torname',
           "width": "25%"
           },
           {data: 'location',
-          "width": "25%" 
+          "width": "30%" 
           },
           {data: 'torsite', searchable: false, 
-            "width": "8%",
+            "width": "6%",
             "render": function ( data, type, row, meta ) {
               if (data) {
                 return '<a href="'+data+'" target="_blank">'+row.torabbrev+'</a>';
@@ -80,7 +80,7 @@
             }
           },
           {data: 'tmdbid', orderable: false,
-            "width": "10%",
+            "width": "8%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
