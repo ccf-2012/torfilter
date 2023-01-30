@@ -157,7 +157,7 @@ def qbitSetting():
                                 form.qbuser.data,
                                 form.qbpass.data,
                                 form.qbapirun.data)
-        if form.qbapirun.data:
+        if form.qbapirun.data == 'True':
             apiurl = 'http://%s:5006/api/torcp' % (form.qbhost.data)
             postjson = '\'{"torpath" : "%F", "torhash": "%I", "torsize": "%Z", "savepath" : "%D", "tortag": "G"}\''
             progstr = 'curl -i -H "Content-Type: application/json" -X POST -d %s %s' % (postjson, apiurl)
