@@ -164,10 +164,10 @@ def qbitSetting():
                                 form.dockerTo.data,
                                 )
         if form.qbapirun.data == 'True':
-            authstr = ' --user %s:%s ' % (myconfig.CONFIG.basicAuthUser, myconfig.CONFIG.basicAuthPass)
-            apiurl = 'http://%s:5006/api/torcp' % (form.qbhost.data)
-            postjson = '\'{"torpath" : "%F", "torhash": "%I", "torsize": "%Z", "savepath" : "%D", "tortag": "G"}\''
-            progstr = 'curl -i' + authstr + '-H "Content-Type: application/json" -X POST -d %s %s' % (postjson, apiurl)
+            authstr = '-u %s:%s ' % (myconfig.CONFIG.basicAuthUser, myconfig.CONFIG.basicAuthPass)
+            apiurl = 'http://%s:5006/api/torcp2' % (form.qbhost.data)
+            postargs = '-d torhash=%I '
+            progstr = 'curl ' + authstr + postargs + apiurl
         else:
             progstr = os.path.join(os.getcwd(),"rcp.sh") +' "%F" "%I" "%Z" "%D" "%G" '
         r = qbfunc.setAutoRunProgram(progstr)
@@ -228,7 +228,7 @@ def editrcp():
         rcpsh_file = request.form['config_file']
         with open(fn, 'w') as f:
             f.write(str(rcpsh_file))
-        msg = "Success"
+        msg = "success"
         
     return render_template('editrcp.html', config_file=rcpsh_file, msg=msg)
 
@@ -279,27 +279,43 @@ def data():
         'draw': request.args.get('draw', type=int),
     }
 
+@app.route('/api/torcp2', methods=['POST'])
+@auth.login_required
+def torcpHash():
+    if 'torhash' in request.form:
+        torhash = request.form['torhash'].strip()
+        print(torhash)
+        torpath, torsize, tortag, savepath = qbfunc.getTorrentByHash(torhash)
+        r = runTorcp(torpath, torhash, torsize, tortag, savepath)
+        if r == 200:
+            return jsonify({'OK': 200}), 200
+    return jsonify({'Error': 401}), 401
+
 
 @app.route('/api/torcp', methods=['POST'])
 @auth.login_required
-def runTorcp():
+def runTorcpApi():
     if 'torpath' in request.json and 'torhash' in request.json and 'torsize' in request.json:
         torpath = request.json['torpath'].strip()
         torhash = request.json['torhash'].strip()
         torsize = request.json['torsize'].strip()
         tortag = request.json['tortag'].strip() if 'tortag' in request.json else ''
         savepath = request.json['savepath'].strip() if 'savepath' in request.json else ''
+        r = runTorcp(torpath, torhash, torsize, tortag, savepath)
+        if r == 200:
+            return jsonify({'OK': 200}), 200
+    return jsonify({'Error': 401}), 401
+
+
+def runTorcp(torpath, torhash, torsize, tortag, savepath):
         if myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo:
             if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
                 torpath = torpath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
                 savepath = savepath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
         import rcp
-        r = rcp.runTorcp(torpath, torhash, torsize, tortag, savepath)
-        if r == 200:
-            return jsonify({'OK': 200}), 200
-    return jsonify({'Error': 401}), 401
-
+        return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath)
+        
 
 def loadArgs():
     parser = argparse.ArgumentParser(

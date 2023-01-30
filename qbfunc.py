@@ -3,6 +3,29 @@ import qbittorrentapi
 import myconfig
 
 
+def getTorrentByHash(torhash):
+    qbClient = qbittorrentapi.Client(
+        host=myconfig.CONFIG.qbServer, port=myconfig.CONFIG.qbPort, username=myconfig.CONFIG.qbUser, password=myconfig.CONFIG.qbPass)
+
+    try:
+        qbClient.auth_log_in()
+    except qbittorrentapi.LoginFailed as e:
+        print(e)
+        return False
+    except:
+        return False
+
+    if not qbClient:
+        return False
+
+    torlist = qbClient.torrents_info(torrent_hashes=[torhash])
+    if len(torlist) > 0:
+        torrent = torlist[0]
+        return torrent.content_path, str(torrent.size), torrent.tags, torrent.save_path
+    else:
+        return '', '', '', '', ''
+
+
 def getAutoRunProgram():
     qbClient = qbittorrentapi.Client(
         host=myconfig.CONFIG.qbServer, port=myconfig.CONFIG.qbPort, username=myconfig.CONFIG.qbUser, password=myconfig.CONFIG.qbPass)
