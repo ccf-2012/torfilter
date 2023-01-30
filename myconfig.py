@@ -16,6 +16,8 @@ class configData():
     qbUser = ''
     qbPass = ''
     apiRunProgram = False
+    dockerFrom = ''
+    dockerTo = ''
     addPause = False
     dryrun = False
     linkDir = ''
@@ -78,9 +80,12 @@ def readConfig(cfgFile):
         CONFIG.qbServer = config['QBIT'].get('server_ip', '')
         CONFIG.qbPort = config['QBIT'].get('port', '')
         CONFIG.qbUser = config['QBIT'].get('user', '')
-        CONFIG.qbPass = config['QBIT'].get('pass')
+        CONFIG.qbPass = config['QBIT'].get('pass', '')
 
-        CONFIG.apiRunProgram = config['QBIT'].get('apirun')
+        CONFIG.apiRunProgram = config['QBIT'].get('apirun', 'False')
+        CONFIG.dockerFrom = config['QBIT'].get('dockerFrom', '')
+        CONFIG.dockerTo = config['QBIT'].get('dockerTo', '')
+
         CONFIG.addPause = config['QBIT'].getboolean('pause', False)
         CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
@@ -128,7 +133,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, tmdb_api_key
     CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
 
 
-def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun):
+def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFrom, dockerTo):
     config = configparser.ConfigParser()
     config.read(cfgFile)
     if not config.has_section('QBIT'):
@@ -138,12 +143,16 @@ def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun):
     config.set('QBIT', 'user', qbuser)
     config.set('QBIT', 'pass', qbpass)
     config.set('QBIT', 'apirun', qbapirun)
+    config.set('QBIT', 'dockerFrom', dockerFrom)
+    config.set('QBIT', 'dockerTo', dockerTo)
     with open(cfgFile, 'w') as f:
         config.write(f)
 
     CONFIG.qbServer = config['QBIT'].get('server_ip', '')
     CONFIG.qbPort = config['QBIT'].get('port', '')
     CONFIG.qbUser = config['QBIT'].get('user', '')
-    CONFIG.qbPass = config['QBIT'].get('pass')
-    CONFIG.apiRunProgram = config['QBIT'].get('apirun')
+    CONFIG.qbPass = config['QBIT'].get('pass', '')
+    CONFIG.apiRunProgram = config['QBIT'].get('apirun', 'False')
+    CONFIG.dockerFrom = config['QBIT'].get('dockerFrom', '')
+    CONFIG.dockerTo = config['QBIT'].get('dockerTo', '')
 

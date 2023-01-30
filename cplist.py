@@ -137,7 +137,8 @@ class QBSettingForm(Form):
     qbapirun = RadioField('qBit 如何运行外部程序', choices=[
                             (True, '通过 API 执行，适用于以docker方式安装的qBit'), 
                             (False, '以rcp.sh脚本运行')])
-
+    dockerFrom = StringField('如果以docker安装，则将内部的路径映射出来')
+    dockerTo = StringField('映射出的路径')
 
 @app.route('/qbsetting', methods=['POST', 'GET'])
 @auth.login_required
@@ -148,6 +149,8 @@ def qbitSetting():
     form.qbuser.data = myconfig.CONFIG.qbUser
     form.qbpass.data = myconfig.CONFIG.qbPass
     form.qbapirun.data = myconfig.CONFIG.apiRunProgram
+    form.dockerFrom.data = myconfig.CONFIG.dockerFrom
+    form.dockerTo.data = myconfig.CONFIG.dockerTo
     msg = ''
     if request.method == 'POST':
         form = QBSettingForm(request.form)
@@ -156,11 +159,15 @@ def qbitSetting():
                                 form.qbport.data,
                                 form.qbuser.data,
                                 form.qbpass.data,
-                                form.qbapirun.data)
+                                form.qbapirun.data,
+                                form.dockerFrom.data,
+                                form.dockerTo.data,
+                                )
         if form.qbapirun.data == 'True':
+            authstr = ' --user %s:%s ' % (myconfig.CONFIG.basicAuthUser, myconfig.CONFIG.basicAuthPass)
             apiurl = 'http://%s:5006/api/torcp' % (form.qbhost.data)
             postjson = '\'{"torpath" : "%F", "torhash": "%I", "torsize": "%Z", "savepath" : "%D", "tortag": "G"}\''
-            progstr = 'curl -i -H "Content-Type: application/json" -X POST -d %s %s' % (postjson, apiurl)
+            progstr = 'curl -i' + authstr + '-H "Content-Type: application/json" -X POST -d %s %s' % (postjson, apiurl)
         else:
             progstr = os.path.join(os.getcwd(),"rcp.sh") +' "%F" "%I" "%Z" "%D" "%G" '
         r = qbfunc.setAutoRunProgram(progstr)
@@ -282,6 +289,11 @@ def runTorcp():
         torsize = request.json['torsize'].strip()
         tortag = request.json['tortag'].strip() if 'tortag' in request.json else ''
         savepath = request.json['savepath'].strip() if 'savepath' in request.json else ''
+        if myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo:
+            if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
+                torpath = torpath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
+                savepath = savepath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
+
         import rcp
         r = rcp.runTorcp(torpath, torhash, torsize, tortag, savepath)
         if r == 200:

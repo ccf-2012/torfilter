@@ -48,6 +48,7 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath):
     if torpath and torhash and torsize:
         torimdb = extractIMDbFromTag(tortag)
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
+
         site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
         targetDir = os.path.join(CONFIG.linkDir, torhash)
         argv = [rootdir, "-d", targetDir, "-s",
