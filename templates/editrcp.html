@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block stylesheet %}
+<style>
+  #editor {
+    /* position: absolute; */
+    width: 800px;
+    height: 400px;
+  }
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+
+<nav class="nav nav-tabs justify-content-center">
+	<a class="nav-link " href="{{ url_for('setting') }}">torcp 参数设置</a>
+	<a class="nav-link" href="{{ url_for('qbitSetting') }}">qBittorrent 设置</a>
+	<a class="nav-link active" href="{{ url_for('editrcp') }}">rcp.sh 脚本编辑</a>
+</nav>
+
+
+<div class="row my-3 justify-content-center">
+  <div class="col-8">
+    {% if msg %}
+    <div class="alert alert-success" role="alert">
+        保存成功 
+    </div>
+    {% endif %}
+
+    <form action="" method="POST">
+      <div class="form-outline mb-4">
+        <input type="hidden" name="config_file" style="display: none;">
+        <div id="editor">{{ config_file }}</div>
+      </div>
+
+      <div class="form-outline mb-4">
+        <button type="submit" class="btn btn-primary btn-block mb-4"> 保存 </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/ace/ace.js') }}"></script>
+<script>
+  // https://stackoverflow.com/questions/8963855/how-do-i-get-value-from-ace-editor
+  var $editor = $('#editor');
+    if ($editor.length > 0) {
+        var editor = ace.edit('editor');
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/sh");
+        editor.setShowPrintMargin(false);  
+        editor.session.setUseWrapMode(true);  
+
+        $editor.closest('form').submit(function() {
+            var code = editor.getValue();
+            $editor.prev('input[type=hidden]').val(code);                
+        });
+    }
+
+
+</script>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 import configparser
-
+import os
 
 class configData():
     interval = 3
@@ -15,6 +15,7 @@ class configData():
     qbPort = ''
     qbUser = ''
     qbPass = ''
+    apiRunProgram = False
     addPause = False
     dryrun = False
     linkDir = ''
@@ -23,6 +24,7 @@ class configData():
     lang = 'cn,ja,ko'
     basicAuthUser = ''
     basicAuthPass = ''
+    rcpshfile = ''
 
 
 CONFIG = configData()
@@ -78,8 +80,11 @@ def readConfig(cfgFile):
         CONFIG.qbUser = config['QBIT'].get('user', '')
         CONFIG.qbPass = config['QBIT'].get('pass')
 
+        CONFIG.apiRunProgram = config['QBIT'].get('apirun')
         CONFIG.addPause = config['QBIT'].getboolean('pause', False)
         CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
+
+        CONFIG.rcpshfile = os.path.join(os.getcwd(), 'rcp.sh')
 
 
 def generatePassword(cfgFile):
@@ -112,7 +117,33 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, tmdb_api_key
     config.set('TORCP', 'lang', lang)
     if not config.has_section('TMDB'):
         config.add_section('TMDB')
-    config.set('TORCP', 'tmdb_lang', tmdb_api_key)
-
+    config.set('TMDB', 'api_key', tmdb_api_key)
     with open(cfgFile, 'w') as f:
         config.write(f)
+
+    CONFIG.linkDir = config['TORCP'].get('linkdir', '')
+    CONFIG.bracket = config['TORCP'].get('bracket', '')
+    CONFIG.tmdbLang = config['TORCP'].get('tmdb_lang', 'en-US')
+    CONFIG.lang = config['TORCP'].get('lang', 'cn,ja,ko')
+    CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
+
+
+def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun):
+    config = configparser.ConfigParser()
+    config.read(cfgFile)
+    if not config.has_section('QBIT'):
+        config.add_section('QBIT')
+    config.set('QBIT', 'server_ip', qbhost)
+    config.set('QBIT', 'port', qbport)
+    config.set('QBIT', 'user', qbuser)
+    config.set('QBIT', 'pass', qbpass)
+    config.set('QBIT', 'apirun', qbapirun)
+    with open(cfgFile, 'w') as f:
+        config.write(f)
+
+    CONFIG.qbServer = config['QBIT'].get('server_ip', '')
+    CONFIG.qbPort = config['QBIT'].get('port', '')
+    CONFIG.qbUser = config['QBIT'].get('user', '')
+    CONFIG.qbPass = config['QBIT'].get('pass')
+    CONFIG.apiRunProgram = config['QBIT'].get('apirun')
+

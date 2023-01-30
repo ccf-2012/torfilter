@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+{% block stylesheet %}
+<style>
+  /* https://stackoverflow.com/questions/33454016/change-font-family-in-datatable */
+  .dataTables_wrapper {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      font-size: 13px;
+      clear: both;
+  }
+
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="table-responsive my-2 mx-1">
@@ -23,7 +34,7 @@
 
 {% endblock %}
 
-{% block scripts %}
+{% block script %}
   <script>
     $(document).ready(function () {
       $('#data').DataTable({

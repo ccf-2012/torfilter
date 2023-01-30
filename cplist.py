@@ -13,7 +13,7 @@ import myconfig
 import argparse
 from wtforms import Form, StringField, RadioField, SubmitField
 from wtforms.validators import DataRequired
-# from flask_wtf import FlaskForm
+import qbfunc
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -128,6 +128,50 @@ def index():
     return render_template('ajax_table.html', title='torcp list')
 
 
+class QBSettingForm(Form):
+    qbhost = StringField('qBit 主机IP', validators=[DataRequired()])
+    qbport = StringField('qBit 端口')
+    qbuser = StringField('qBit 用户名', validators=[DataRequired()])
+    qbpass = StringField('qBit 密码', validators=[DataRequired()])
+    submit = SubmitField("保存设置")
+    qbapirun = RadioField('qBit 如何运行外部程序', choices=[
+                            (True, '通过 API 执行，适用于以docker方式安装的qBit'), 
+                            (False, '以rcp.sh脚本运行')])
+
+
+@app.route('/qbsetting', methods=['POST', 'GET'])
+@auth.login_required
+def qbitSetting():
+    form = QBSettingForm()
+    form.qbhost.data = myconfig.CONFIG.qbServer
+    form.qbport.data = myconfig.CONFIG.qbPort
+    form.qbuser.data = myconfig.CONFIG.qbUser
+    form.qbpass.data = myconfig.CONFIG.qbPass
+    form.qbapirun.data = myconfig.CONFIG.apiRunProgram
+    msg = ''
+    if request.method == 'POST':
+        form = QBSettingForm(request.form)
+        myconfig.updateQBSettings(ARGS.config,
+                                form.qbhost.data,
+                                form.qbport.data,
+                                form.qbuser.data,
+                                form.qbpass.data,
+                                form.qbapirun.data)
+        if form.qbapirun.data:
+            apiurl = 'http://%s:5006/api/torcp' % (form.qbhost.data)
+            postjson = '\'{"torpath" : "%F", "torhash": "%I", "torsize": "%Z", "savepath" : "%D", "tortag": "G"}\''
+            progstr = 'curl -i -H "Content-Type: application/json" -X POST -d %s %s' % (postjson, apiurl)
+        else:
+            progstr = os.path.join(os.getcwd(),"rcp.sh") +' "%F" "%I" "%Z" "%D" "%G" '
+        r = qbfunc.setAutoRunProgram(progstr)
+        if r:
+            msg = 'success'
+        else:
+            msg = 'failed'
+    return render_template('qbsetting.html', form=form, msg=msg)
+
+
+
 class SettingForm(Form):
     linkdir = StringField('生成目标目录的存储位置', validators=[DataRequired()])
     tmdb_key = StringField('TMDb API key', validators=[DataRequired()])
@@ -151,30 +195,35 @@ def setting():
     form.bracket.data = myconfig.CONFIG.bracket
     form.tmdb_lang.data = myconfig.CONFIG.tmdbLang
     form.sep_lang.data = myconfig.CONFIG.lang
+    msg = ''
     if request.method == 'POST':
         form = SettingForm(request.form)
         myconfig.updateConfigSettings(ARGS.config,
                                       linkDir=form.linkdir.data,
                                       bracket=form.bracket.data,
-                                      tmdbLang=form.tmdb_key.data,
+                                      tmdbLang=form.tmdb_lang.data,
                                       lang=form.sep_lang.data,
                                       tmdb_api_key=form.tmdb_key.data)
+        msg = 'success'
 
-    return render_template('settings2.html', form=form)
+    return render_template('settings2.html', form=form, msg=msg)
 
 
-@app.route('/editconf', methods=['POST', 'GET'])
+@app.route('/editrcp', methods=['POST', 'GET'])
 @auth.login_required
-def editconf():
-    # fn = 'config.ini'
-    # with open(fn, 'r') as f:
-    #     config_ini = f.read()
-    # if request.method == 'POST':
-    #     config_ini = request.form['text_box']
-    #     with open(fn, 'w') as f:
-    #         f.write(str(config_ini))
-    config_ini = 'under construction....'
-    return render_template('edit_config.html', config_file=config_ini)
+def editrcp():
+    fn = myconfig.CONFIG.rcpshfile
+    if os.path.isfile(fn):
+        with open(fn, 'r') as f:
+            rcpsh_file = f.read()
+    msg = ''
+    if request.method == 'POST':
+        rcpsh_file = request.form['config_file']
+        with open(fn, 'w') as f:
+            f.write(str(rcpsh_file))
+        msg = "Success"
+        
+    return render_template('editrcp.html', config_file=rcpsh_file, msg=msg)
 
 
 @app.route('/api/data')
@@ -262,7 +311,7 @@ def main():
     if not myconfig.CONFIG.basicAuthUser or not myconfig.CONFIG.basicAuthPass:
         print('set user/pasword in config.ini or use "-G" argument')
         return
-    app.run(host='0.0.0.0', port=5006, debug=True)
+    app.run(host='0.0.0.0', port=5006, debug=False)
 
 
 if __name__ == '__main__':
