@@ -43,14 +43,17 @@ def  getSiteIdDirName(pathStr, savepath):
     return torRootFolder, siteIdFolder
         
 
-def runTorcp(torpath, torhash, torsize, tortag, savepath):
+def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir):
     print("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" % (torpath, torhash, torsize, tortag, savepath))
     if torpath and torhash and torsize:
         torimdb = extractIMDbFromTag(tortag)
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
 
         site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
-        targetDir = os.path.join(CONFIG.linkDir, torhash)
+        if insertHashDir:
+            targetDir = os.path.join(CONFIG.linkDir, torhash)
+        else:
+            targetDir = CONFIG.linkDir
         argv = [rootdir, "-d", targetDir, "-s",
                 "--tmdb-api-key", CONFIG.tmdb_api_key,
                 "--tmdb-lang", CONFIG.tmdbLang,
@@ -92,7 +95,7 @@ def loadArgs():
 def main():
     loadArgs()
     readConfig(ARGS.config)
-    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag, ARGS.save_path)
+    runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size, ARGS.tag, ARGS.save_path, insertHashDir=True)
 
 
 if __name__ == '__main__':

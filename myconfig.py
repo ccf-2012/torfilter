@@ -15,7 +15,7 @@ class configData():
     qbPort = ''
     qbUser = ''
     qbPass = ''
-    apiRunProgram = False
+    apiRunProgram = 'False'
     dockerFrom = ''
     dockerTo = ''
     addPause = False
@@ -143,8 +143,8 @@ def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFr
     config.set('QBIT', 'user', qbuser)
     config.set('QBIT', 'pass', qbpass)
     config.set('QBIT', 'apirun', qbapirun)
-    config.set('QBIT', 'dockerFrom', dockerFrom)
-    config.set('QBIT', 'dockerTo', dockerTo)
+    config.set('QBIT', 'dockerFrom', os.path.normpath(dockerFrom))
+    config.set('QBIT', 'dockerTo', os.path.normpath(dockerTo))
     with open(cfgFile, 'w') as f:
         config.write(f)
 

@@ -134,11 +134,11 @@ class QBSettingForm(Form):
     qbuser = StringField('qBit 用户名', validators=[DataRequired()])
     qbpass = StringField('qBit 密码', validators=[DataRequired()])
     submit = SubmitField("保存设置")
-    qbapirun = RadioField('qBit 如何运行外部程序', choices=[
-                            (True, '通过 API 执行，适用于以docker方式安装的qBit'), 
-                            (False, '以rcp.sh脚本运行')])
-    dockerFrom = StringField('如果以docker安装，则将内部的路径映射出来')
-    dockerTo = StringField('映射出的路径')
+    qbapirun = RadioField('qBit 是否以 docker 形式运行？', choices=[
+                            ('True', '是，以docker方式安装的qBit，须设置映射路径'), 
+                            ('False', '否，独立运行，须设置 rcp.sh 脚本')])
+    dockerFrom = StringField('以docker安装，则设置映射将docker中的路径：')
+    dockerTo = StringField('转换为以下路径：')
 
 @app.route('/qbsetting', methods=['POST', 'GET'])
 @auth.login_required
@@ -308,13 +308,13 @@ def runTorcpApi():
 
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath):
-        if myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo:
+        if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
             if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
                 torpath = torpath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
                 savepath = savepath.replace(myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
         import rcp
-        return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath)
+        return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False)
         
 
 def loadArgs():
