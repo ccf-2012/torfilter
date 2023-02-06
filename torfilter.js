@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      0.9.18
+// @version      1.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -9,7 +9,7 @@
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
 // @grant        GM.xmlHttpRequest
-// @connect      localhost
+// @connect      192.168.5.6
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://*pterclub.com/torrents.php*
 // @match        https://*pterclub.com/officialgroup*
@@ -40,6 +40,14 @@
 // @match        https://hdhome.org/details.php*
 
 // ==/UserScript==
+
+const API_SERVER = 'http://192.168.5.6:5006';
+const API_AUTH_USER = "admin";
+const API_AUTH_PASS = "password";
+
+
+const API_CHECKDUP = API_SERVER + '/api/checkdupeonly';
+const API_DUPDOWNLOAD = API_SERVER + '/api/dupedownload';
 
 const not_supported = (element) => {
   return "";
@@ -487,7 +495,7 @@ const lhd_imdbid = (element) => {
   var t = $(element)
     .find("a[href*='imdb']" )
     .attr("href");
-  
+
   if (t) {
     var m = t.match(/title\/(tt\d+)/);
   }
@@ -793,7 +801,7 @@ var config = [
     funcSeeding: beitai_seeding,
     funcDownloaded: not_supported,
     funcGetPasskey: beitai_passkey,
-  }, 
+  },
   {
     host: "hdchina.org",
     abbrev: "hdc",
@@ -820,7 +828,7 @@ var config = [
     funcSeeding: hdc_seeding,
     funcDownloaded: hdc_downed,
     funcGetPasskey: not_supported,
-  },  
+  },
   {
     host: "hdsky.me",
     abbrev: "hds",
@@ -932,7 +940,7 @@ var config = [
     funcSeeding: hdh_seeding,
     funcDownloaded: hdh_downed,
     funcGetPasskey: hdh_passkey,
-  }, 
+  },
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
@@ -1332,7 +1340,7 @@ function onClickCopyDownloadLink(html) {
 var SUM_SIZE;
 
 var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
-  var apiUrl = doDownload ? "http://localhost:3006/p/api/v1.0/dupedownload" : "http://localhost:3006/p/api/v1.0/checkdupeonly"
+  var apiUrl = doDownload ? API_DUPDOWNLOAD : API_CHECKDUP
   let sizestr = $(ele).find(THISCONFIG.eleTorItemSize).text().trim();
   let torsize = 0;
   if (sizestr) {
@@ -1344,6 +1352,7 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
     data: JSON.stringify(tordata),
     headers: {
       "Content-Type": "application/json",
+      "Authorization": "Basic " + btoa(API_AUTH_USER + ":" + API_AUTH_PASS)
     },
     onload: function (response) {
       if (response.status == 202) {
@@ -1439,6 +1448,7 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
     data: JSON.stringify(tordata),
     headers: {
       "Content-Type": "application/json",
+      "Authorization": "Basic " + btoa(API_AUTH_USER + ":" + API_AUTH_PASS)
     },
     onload: function (response) {
       if (response.status == 202) {
@@ -1483,7 +1493,7 @@ var asyncDetailApiDownload = async (html, forcedl) => {
       force: forcedl
     };
     await postToDetailCheckDupeApi(
-      "http://localhost:3006/p/api/v1.0/dupedownload",
+      API_DUPDOWNLOAD,
       tordata
     );
   }
@@ -1539,7 +1549,7 @@ function getDownloadLink(element, passKeyStr){
       dllink = linkPasskey(url, passKeyStr);
     }
     // let dllink = linkPasskey(url, passKeyStr);
- 
+
     return dllink
   }
   return ""
@@ -1563,7 +1573,7 @@ function getSiteId(detailLink, imdbstr){
 
 var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
-  let dupeChecked = DUPECHECKED 
+  let dupeChecked = DUPECHECKED
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
   SUM_SIZE = 0;
@@ -1574,7 +1584,7 @@ var asyncApiDownload = async (html, doDownload) => {
       let item = $(element).find(THISCONFIG.eleTorItem);
       let detailLink = item.prop("href");
       let seednum = parseInt($(element).find(THISCONFIG.eleTorItemSeednum).text().trim()) || 0;
-      
+
       if (item.length == 0) { continue}
       // refer to Line 978:
       // } else if (response.status == 201) {
@@ -1659,7 +1669,7 @@ var asyncDetailCheckDupe = async (html) => {
       downloadlink: dllink,
     };
     await postToDetailCheckDupeApi(
-      "http://localhost:3006/p/api/v1.0/checkdupeonly",
+      API_CHECKDUP,
       tordata
     );
   }
