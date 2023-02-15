@@ -736,7 +736,7 @@ var config = [
     eleDownLink:
       "td:nth-child(2) > div.name_right > span:nth-child(1) > a.dl_a",
     eleCatImg: "td:nth-child(1) > a > img",
-    eleDetailTitle: "#top",
+    eleDetailTitle: "#main_table  td > h1",
     filterGY: false,
     filterZZ: false,
     funcIMDb: ttg_imdbval,
