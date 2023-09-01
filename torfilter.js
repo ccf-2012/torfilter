@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.1
+// @version      1.2.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -16,6 +16,8 @@
 // @match        https://pterclub.com/details.php*
 // @match        https://chdbits.co/torrents.php*
 // @match        https://chdbits.co/details.php*
+// @match        https://ptchdbits.co/torrents.php*
+// @match        https://ptchdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
 // @match        https://audiences.me/details.php*
 // @match        https://ourbits.club/torrents.php*
@@ -455,13 +457,13 @@ const sky_passkey = async () => {
 //  ====== hhclub
 const hh_imdbval = (element) => {
   var t = $(element).find("img[title='imdb']");
-  return t.next().text();
+  return t.parent().text();
 };
 
 
 const hh_douban = (element) => {
   var d = $(element).find("img[title='douban']");
-  return d.next().text();
+  return d.parent().text();
 };
 
 const hh_seeding = (element) => {
@@ -860,22 +862,22 @@ var config = [
   {
     host: "hhanclub.top",
     abbrev: "hh",
-    eleTorTable: "table.torrents",
-    eleCurPage: "#outer > table.main > tbody > tr > td > p:nth-child(2) > font:nth-child(4) > b",
-    eleTorList: "table.torrents > tbody > tr",
-    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
-    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
-    eleTorItemAdded: "td:nth-child(4) > span",
-    useTitleName: 1,
-    eleIntnTag: "div.tag-gf",
+    eleTorTable: "div.torrent-table-for-spider",
+    // eleTorTable: "#mainContent > div > div > div.flex.w-\[95\%\].bg-\[\#4F5879\]\/\[0\.7\].opacity-\[0\.7\].h-\[30px\].m-auto.z-20.\!rounded-\[3px\]",
+    eleCurPage: "#mainContent > div > > div:nth-child(1) > div > a ",
+    eleTorList: "div.torrent-table-for-spider > div",
+    eleTorItem: "div.torrent-title> div > a",
+    eleTorItemDesc: "div.torrent-title> div > div",
+    eleTorItemSize: "div.torrent-info > div.torrent-info-text-size",
+    eleTorItemSeednum: "div.torrent-info > div.torrent-info-text-seeders > a",
+    eleTorItemAdded: "div.torrent-info > torrent-info-text-added > span",
+    useTitleName: 0,
+    eleIntnTag: "span:contains('官方')",
     eleCnLangTag: "span:contains('国语')",
     eleCnSubTag: "span:contains('中字')",
-    eleDownLink:
-      "td:nth-child(2) > table > tbody > tr > td:nth-child(3) > a:nth-child(1)",
-    eleCatImg: "td:nth-child(1) > a > img",
-    eleDetailTitle: "#top",
+    eleDownLink: "div.torrent-manage > div > a",
+    eleCatImg: "div.torrent-cat > a > img",
+    eleDetailTitle: "#mainContent > div > div > div > div:nth-child(4)",
     filterGY: true,
     filterZZ: true,
     funcIMDb: hh_imdbval,
@@ -1216,7 +1218,7 @@ var onClickFilterList = (html) => {
   let sizerange = getTorSizeRange($("#sizerange").val());
   saveParamToCookie();
   let filterCount = 0;
-  for (let index = 1; index < torlist.length; ++index) {
+  for (let index = 0; index < torlist.length; ++index) {
     let element = torlist[index];
     let item = $(element).find(THISCONFIG.eleTorItem);
     if (item.length <= 0) {
