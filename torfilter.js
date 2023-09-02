@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.2.1
+// @version      1.2.2
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -36,8 +36,8 @@
 // @match        https://hdsky.me/details.php*
 // @match        https://hhanclub.top/torrents.php*
 // @match        https://hhanclub.top/details.php*
-// @match        https://lemonhd.org/torrents*
-// @match        https://lemonhd.org/details*
+// @match        https://leaves.red/torrents*
+// @match        https://leaves.red/details*
 // @match        https://hdhome.org/torrents.php*
 // @match        https://hdhome.org/details.php*
 
@@ -196,11 +196,11 @@ const ob_douban = (element) => {
 };
 const ob_seeding = (element) => {
   var d = $(element).find("div.doing");
-  return d.length > 0 && d.attr("title").startsWith("100");
+  return d.length > 0 && d.attr("title").includes("100%");
 };
 const ob_downed = (element) => {
   var d = $(element).find("div.out");
-  return d.length > 0 && d.attr("title").startsWith("100");
+  return d.length > 0 && d.attr("title").includes("100%");
 };
 
 const ob_passkey = async () => {
@@ -213,6 +213,37 @@ const ob_passkey = async () => {
   if (passkeyRow.length <= 0) {
     passkeyRow = $(html).find('tr:contains("Passkey"):last');
   }
+  if (passkeyRow.length > 0) {
+    let key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim() + "&https=1";
+  }
+  return "";
+};
+
+//  ====== redleaves
+const rl_imdbval = (element) => {
+  var t = $(element).find("img[alt*='imdb']")
+  return t.parent().text();
+};
+
+const rl_douban = (element) => {
+  var d = $(element).find("img[alt*='douban']");
+  return d.parent().text();
+};
+
+const rl_seeding = (element) => {
+  var d = $(element).find("div[title]");
+  return d.length > 0 && d.attr("title").includes("100");
+};
+const rl_downed = (element) => {
+  var d = $(element).find("div[title]");
+  return d.length > 0 && d.attr("title").includes("100");
+};
+
+const rl_passkey = async () => {
+  let html = await $.get("usercp.php");
+
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
   if (passkeyRow.length > 0) {
     let key = passkeyRow.find("td:last").text();
     return "&passkey=" + key.trim() + "&https=1";
@@ -693,6 +724,34 @@ var config = [
     funcGetPasskey: ob_passkey,
   },
   {
+    host: "leaves.red",
+    abbrev: "rl",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font:nth-child(4) > b",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: rl_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: rl_douban,
+    funcSeeding: rl_seeding,
+    funcDownloaded: rl_downed,
+    funcGetPasskey: rl_passkey,
+  },
+  {
     host: "springsunday.net",
     abbrev: "ssd",
     eleTorTable: "table.torrents",
@@ -955,45 +1014,45 @@ function addFilterPanel() {
 
   var donwnloadPanel = `
   <table align='center'> <tr>
-    <td style='width: 70px; border: none;'>
+    <td style='width: 78px; border: none;'>
       <table>
         <tr>
-          <td style='width: 65px; border: none;'>
+          <td style='width: 68px; border: none;'>
             <input type="checkbox" id="chnsub" name="chnsub" value="uncheck"><label for="chnsub">有中字 </label>
           </td>
           </tr>
           <tr>
-          <td style='width: 65px; border: none;'>
+          <td style='width: 68px; border: none;'>
             <input type="checkbox" id="nochnlang" name="nochnlang" value="uncheck"><label for="nochnlang">无国语 </label>
           </td>
         </tr>
       </table>
     </td>
-    <td style='width: 70px; border: none;'>
+    <td style='width: 78px; border: none;'>
       <table>
         <tr>
-          <td style='width: 65px; border: none;'>
+          <td style='width: 68px; border: none;'>
           <input type="checkbox" id="seeding" name="seeding" value="uncheck"><label for="seeding">未作种 </label>
           </td>
         </tr>
         <tr>
-          <td style='width: 65px; border: none;'>
+          <td style='width: 68px; border: none;'>
             <input type="checkbox" id="downloaded" name="downloaded" value="uncheck"><label for="downloaded">未曾下 </label>
           </td>
         </tr>
       </table>
       </td>
 
-      <td style='width: 200px; border: none;'>
+      <td style='width: 190px; border: none;'>
         <table>
           <tr>
           <td style=' border: none;'>
-          <div>标题不含 <input style='width: 130px;' id='titleregex' value="" />
+          <div>标题不含 <input style='width: 110px;' id='titleregex' value="" />
           </div>
           </td>
         </tr><tr>
           <td style='border: none;'>
-          <div>描述不含 <input style='width: 130px;' id='titledescregex' value="" />
+          <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
           </div>
           </td>
         </tr>
