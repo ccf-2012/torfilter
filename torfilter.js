@@ -40,6 +40,14 @@
 // @match        https://leaves.red/details*
 // @match        https://hdhome.org/torrents.php*
 // @match        https://hdhome.org/details.php*
+// @match        https://wintersakura.net/torrents.php*
+// @match        https://wintersakura.net/details.php*
+// @match        https://pt.soulvoice.club/torrents.php*
+// @match        https://pt.soulvoice.club/details.php*
+// @match        https://ptsbao.club/torrents.php*
+// @match        https://ptsbao.club/details.php*
+// @match        https://pt.eastgame.org/torrents.php*
+// @match        https://pt.eastgame.org/details.php*
 
 // ==/UserScript==
 
@@ -606,6 +614,24 @@ const hdh_passkey = async () => {
 };
 
 
+//  ====== ptsbao
+const ptsbao_imdbval = (element) => {
+  var t = $(element).find("img[title*='IMDb']")
+  return t.parent().text();
+};
+
+
+const ptsbao_seeding = (element) => {
+  var d = $(element).find("div[title]");
+  return d.length > 0 && d.attr("title").includes("100");
+};
+const ptsbao_downed = (element) => {
+  var d = $(element).find("div[title]");
+  return d.length > 0 && d.attr("title").includes("100");
+};
+
+
+
 var config = [
   {
     host: "pterclub.com",
@@ -1002,6 +1028,118 @@ var config = [
     funcDownloaded: hdh_downed,
     funcGetPasskey: hdh_passkey,
   },
+  {
+    host: "wintersakura.net",
+    abbrev: "wintersakura",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官方")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: rl_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: rl_douban,
+    funcSeeding: rl_seeding,
+    funcDownloaded: rl_downed,
+    funcGetPasskey: rl_passkey,
+  },  
+  {
+    host: "pt.soulvoice.club",
+    abbrev: "soulvoice",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官方")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: rl_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: rl_douban,
+    funcSeeding: rl_seeding,
+    funcDownloaded: rl_downed,
+    funcGetPasskey: rl_passkey,
+  },  
+  {
+    host: "ptsbao.club",
+    abbrev: "ptsbao",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(6)",
+    eleTorItemSeednum: "td:nth-child(7)",
+    eleTorItemAdded: "td:nth-child(5) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官方")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: ptsbao_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: ptsbao_seeding,
+    funcDownloaded: ptsbao_downed,
+    funcGetPasskey: rl_passkey,
+  },
+  {
+    host: "pt.eastgame.org",
+    abbrev: "tlf",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-zz",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: rl_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: rl_douban,
+    funcSeeding: rl_seeding,
+    funcDownloaded: rl_downed,
+    funcGetPasskey: rl_passkey,
+  },  
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
