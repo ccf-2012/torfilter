@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2023.9.6: wtsakura, soulvoice, ptsbao,  tlf 
 * 2023.1.25: `--siteid-folder` for duapi, torss: 添加种子时建立 'Site_Id_IMDb' 目录，例如：aud_108375_tt1172571
 * 2023.1.17: lemonhd (gazella, animate分类无效)
 * 2023.1.14: torss
