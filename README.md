@@ -13,7 +13,7 @@
 
 
 ## Last update:
-* 2023.11.23: hddolby, hd4fans, hdfans
+* 2023.11.23: hddolby, hd4fans, hdfans, pthome
 * 2023.9.6: wtsakura, soulvoice, ptsbao,  tlf 
 * 2023.1.25: `--siteid-folder` for duapi, torss: 添加种子时建立 'Site_Id_IMDb' 目录，例如：aud_108375_tt1172571
 * 2023.1.17: lemonhd (gazella, animate分类无效)
@@ -42,7 +42,7 @@
 ## 功能
 油猴脚本，在种子列表页中:
 1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-    * 当前支持pter, chd, aud, ob, ssd, frds, beitai, ttg, hdc, hds, hh，redleaves, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, hd4fans, hdfans
+    * 当前支持pter, chd, aud, ob, ssd, frds, beitai, ttg, hdc, hds, hh，redleaves, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, hd4fans, hdfans, pthome
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
 3. 配合 dupapi.py 实现查重下载入库 (since 2022.10.9)

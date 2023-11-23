@@ -54,6 +54,8 @@
 // @match        https://pt.hd4fans.org/details.php*
 // @match        https://hdfans.org/torrents.php*
 // @match        https://hdfans.org/details.php*
+// @match        https://pthome.net/torrents.php*
+// @match        https://pthome.net/details.php*
 
 // ==/UserScript==
 
@@ -645,6 +647,18 @@ const hddolby_douban = (element) => {
   return d.parent().text();
 };
 
+const hddolby_imdbid = (element) => {
+  var t = $(element)
+    .find(
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)"
+    )
+    .attr("href");
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
 
 const hddolby_seeding = (element) => {
   var d = $(element).find("td:nth-child(9)");
@@ -719,6 +733,39 @@ const hdfans_passkey = async () => {
     return "&passkey=" + key.trim();
   }
   return "";
+};
+
+//===== pthome
+const pthome_imdbval = (element) => {
+  var t = $(element).find("img[src*='imdb.png']")
+  return t.parent().text();
+};
+
+const pthome_douban = (element) => {
+  var d = $(element).find("img[src='douban.png']");
+  return d.parent().text();
+};
+
+
+const pthome_imdbid = (element) => {
+  var t = $(element)
+    .find(
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > div > a:nth-child(3)"
+    )
+    .attr("href");
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
+const pthome_seeding = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
+};
+const pthome_downed = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  return d.text().includes("100%");
 };
 
 var config = [
@@ -1251,7 +1298,7 @@ var config = [
     filterGY: true,
     filterZZ: true,
     funcIMDb: hddolby_imdbval,
-    funcIMDbId: not_supported,
+    funcIMDbId: hddolby_imdbid,
     funcDouban: hddolby_douban,
     funcSeeding: hddolby_seeding,
     funcDownloaded: hddolby_downed,
@@ -1312,7 +1359,35 @@ var config = [
     funcSeeding: hdfans_seeding,
     funcDownloaded: hdfans_downed,
     funcGetPasskey: hdfans_passkey,
-  },  
+  },
+  {
+    host: "pthome.net",
+    abbrev: "pthome",
+    eleTorTable: "#torrenttable",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(2) > font",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "span.tgf",
+    eleCnLangTag: "span.tgy",
+    eleCnSubTag: 'span:contains("中字"), span:contains("官字")',
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: pthome_imdbval,
+    funcDouban: pthome_douban,
+    funcIMDbId: hddolby_imdbid,
+    funcSeeding: pthome_seeding,
+    funcDownloaded: pthome_downed,
+    funcGetPasskey: hddolby_passkey,
+  },
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
