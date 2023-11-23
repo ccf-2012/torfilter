@@ -42,7 +42,7 @@
 ## 功能
 油猴脚本，在种子列表页中:
 1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-    * 当前支持pter, chd, ade, ob, ssd, frds, beitai, ttg, hdc, hds, lhd
+    * 当前支持pter, chd, aud, ob, ssd, frds, beitai, ttg, hdc, hds, hh，redleaves, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, hd4fans, hdfans
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
 3. 配合 dupapi.py 实现查重下载入库 (since 2022.10.9)
@@ -64,7 +64,7 @@
 
 ### Note:
 * 部分站不支持国语，中字标签搜索
-* ob, chd, ssd, frds, hds 的下载链接无passkey，拼合usercp中的passkey构成下载链接
+* ~~ ob, chd, ssd, frds, hds 的下载链接无passkey，拼合usercp中的passkey构成下载链接 ~~
 * 种子列表页面上无法取得imdb的(frds, chd, beitai, hdc)，以及列表页上无法取得下载链接的(hds)，会进入种子详情页获取信息，这会对站点发起拉取页面的操作，各站对拉取页面和种子不同的保护措施，请自行把握。
 
 
@@ -186,182 +186,6 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 * dupapi接受浏览器插件torfilter连接，会连themoviedb.org查TMDb，会连qbit下载器进行下载；所以需三方网络都通，特别地，连接TMDb查询，可能需配置 host 或 梯；
 * dupapi当前对于剧集，没有分辨季与集，只要有就判重，可在详情页手动点下载。
 
-
 -----
+*** 一些原来的小程序，已经整合到新版 torcp 中，未来再考虑开放
 
-# cplist
-* 当前为 torcp 的 webui
-* 默认使用脚本所在当前目录下的 `config.ini` 文件
-* 初次使用时，以 `-G` 参数执行，以获得初始用户名密码，如下：
-```sh
-python3 cplist.py -G
-```
-
-
-## 使用
-```
-python3 cplist.py -h
-usage: cplist.py [-h] [-C CONFIG] [-G]
-
-TORCP web ui.
-
-options:
-  -h, --help            show this help message and exit
-  -C CONFIG, --config CONFIG
-                        config file.
-  -G, --init-password   init pasword.
-```
-
------
-
-# rcp.py
-* 解析 qbit 完成后执行脚本传来的参数，调用 torcp 进行目录组织链接，并以数据库存储记录
-* 如果在加种子时建立了类如 'site-12345-tt123456' 这样的 SiteID 目录，则会提取其中的信息存入数据库
-* 默认使用脚本所在当前目录下的 `config.ini` 文件
-* 设置 config.ini 中的 `TORCP` 和 `TMDB` 
-
-## 使用
-```
-python3 rcp.py -h
-usage: rcp.py [-h] [-F FULL_PATH] [-I INFO_HASH] [-D SAVE_PATH] [-G TAG] [-Z SIZE] [-C CONFIG]
-
-wrapper to TORCP to save log in sqlite db.
-
-options:
-  -h, --help            show this help message and exit
-  -F FULL_PATH, --full-path FULL_PATH
-                        full torrent save path.
-  -I INFO_HASH, --info-hash INFO_HASH
-                        info hash of the torrent.
-  -D SAVE_PATH, --save-path SAVE_PATH
-                        qbittorrent save path.
-  -G TAG, --tag TAG     tag of the torrent.
-  -Z SIZE, --size SIZE  size of the torrent.
-  -C CONFIG, --config CONFIG
-                        config file.
-```
-
------
-
-# notify_plex.py
-* 种子完成后上传 gd 盘，Plex 无法感知，以此脚本进行通知
-* 此脚本从本地数据库中获得 torcp 重组生成的媒体路径，以Plex api进行通知
-* 默认使用脚本所在当前目录下的 `config.ini` 文件
-* 设置 config.ini 中的 `PLEX_SECTION` 和 `PLEX` 
-
-## 使用
-```
-python3 notify_plex.py -h
-usage: notify_plex.py [-h] -I INFO_HASH [-C CONFIG]
-
-Notify plex server to add a file/folder.
-
-options:
-  -h, --help            show this help message and exit
-  -I INFO_HASH, --info-hash INFO_HASH
-                        info hash of the torrent.
-  -C CONFIG, --config CONFIG
-                        config file.
-```
-
------
-
-# torss
-* torss用于通过站点提供的rss链接，结合种子详情页解析出IMDb信息，添加种子时同时添加IMDb标签
-* torss所使用的qBit下载器，与dupapi共用 `config.ini` 中的设置
-* torss在下载时也会进行查重，与dupapi同样使用 `instance` 子目录中的SQLite 数据库
-
-## 前置准备
-* 与前面dupapi部分相同
-
-
-## 使用
-```
-python3 torss.py -h
-
-usage: torss.py [-h] [-R RSS] [-s SINGLE_PAGE] [-c COOKIE] [--title-regex TITLE_REGEX] [--title-not-regex TITLE_NOT_REGEX] [--info-regex INFO_REGEX]
-                [--info-not-regex INFO_NOT_REGEX] [--sleep SLEEP] [--add-pause] [--exclude-no-imdb] [--min-imdb MIN_IMDB] [--siteid-folder] [--init-rss-history]
-
-A script to rss pt site, add torrent to qbit with IMDb id as a tag.
-
-options:
-  -h, --help            show this help message and exit
-  -R RSS, --rss RSS     the rss link.
-  -s SINGLE_PAGE, --single-page SINGLE_PAGE
-                        fetch single torrent in detail page.
-  -c COOKIE, --cookie COOKIE
-                        the cookie to the detail page.
-  --title-regex TITLE_REGEX
-                        regex to match the rss title.
-  --title-not-regex TITLE_NOT_REGEX
-                        regex to not match the rss title.
-  --info-regex INFO_REGEX
-                        regex to match the info/detail page.
-  --info-not-regex INFO_NOT_REGEX
-                        regex to not match the info/detail page.
-  --sleep SLEEP         sleep between each request of info page.
-  --add-pause           Add torrent in PAUSE state.
-  --exclude-no-imdb     Do not download without IMDb
-  --min-imdb MIN_IMDB   filter imdb greater than <MIN_IMDb>.
-  --siteid-folder       make Site_Id_Imdb parent folder.
-  --init-rss-history    Init/Empty rss history table.
-```
-* 注： 不加 `--cookie` 不解析种子信息页，
-
-## 示例
-* 从rss链接中，逐个获取种子详情页，提取IMDb id并将种子发送至下载器，打上IMDB标签
-```sh
-python3 torss.py -R "https://some.pt.site/torrentrss.php?rows=10&..." -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
-```
-
-* 取单个页面，提取IMDb id并将种子发送至下载器，打上IMDB标签
-```sh
-python3 torss.py -i "https://some.pt.site/details.php?id=60381"  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
-```
-
-* 标题中包含 x264 且以 ADE 结尾的，且非单集剧集(标题中不包含 'E07'这样的分集特征的)
-```sh
-python3 torss.py --title-regex 'x264.*[-@]?ADE$' --title-not-regex 'Ep?\d+' -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ==" 
-```
-
-* 信息详情页可解析到更多信息，提供了 `--info-regex` 和 `--info-not-regex` 两个正则，比如下面例子是通过详情页信息过滤：有中字，非国语，且有IMDb的种子(仅作示例，部分站如观众和猫，建RSS链接时本身提供国语和中字标签的过滤)：
-```sh
-python3 torss.py --info-regex 'tags tzz' --info-not-regex 'tags tgy' --exclude-no-imdb  -R "https://some.pt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  
-```
-
-## 注意
-* 如果使用了torfilter，在获得cookie字串后，要将torfilter添加的部分删除，如这样的字串："filterParam=minimdb=5&sizerange=&titleregex=720&descregex=ç¬¬\d+&seeding=true&downloaded=false&chnsub=false&nochnlang=false"
-* `--exclude-no-imdb` 选项是指站点详情页上没有提供IMDb信息即停止下载，然而大部分站点给的rss标题通过解析是可以查询到TMDb的
-* `--min-imdb` 采用的是站点详情页面上给出的IMDb评分，是不可靠的，且如果页面没有给出即会导致不下载
-
-
-
-## 定时运行
-* 使用crontab定时运行rss任务
-* 示例：在 `/home/ccf2013/torfilter/` 下建一个 `rss_ade.sh` 文件，内容如下：
-
-```sh
-#!/bin/bash
-cd /home/ccf2013/torfilter/
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 -R "https://adept.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "adecookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/rss_ade.log 2>&1
-```
-
-* 同目录下可再建多个，如 `rss_pter.sh`:
-```sh
-#!/bin/bash
-cd /home/ccf2013/torfilter/
-python3 /home/ccf2013/torfilter/torss.py --title-not-regex 'Ep?\d+' --min-imdb 6 --exclude-no-imdb  -R "https://pterpt.site/torrentrss.php?rows=10&tags=gf%zz&exp=90....."  -c "ptercookie; c_secure_uid=ABCDE; ....c_secure_tracker_ssl=bm9wZQ=="  >> /home/ccf2013/log/rss_pter.log 2>&1
-```
-* 对所建脚本加运行权限
-```sh
-chmod 755 /home/ccf2013/torfilter/rss_ade.sh
-chmod 755 /home/ccf2013/torfilter/rss_pter.sh
-```
-
-* 运行 `crontab -e` 编辑内容如下：
-```sh
-0 */2 * * * /home/ccf2013/torfilter/rss_ade.sh # 每2小时运行一次，在0分开始
-20 */3 * * * /home/ccf2013/torfilter/rss_pter.sh # 每3小时运行一次，在20分开始
-```
-
-* 存盘，即可

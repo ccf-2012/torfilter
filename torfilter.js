@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.4
+// @version      1.4.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -1297,9 +1297,9 @@ var config = [
     eleTorItemSeednum: "td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
-    eleIntnTag: "span.tgf",
-    eleCnLangTag: "span.tgy",
-    eleCnSubTag: "span.tzz",
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
     eleDownLink:
       "table.torrentname table > tbody > tr >  td:nth-child(3) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a > img",
