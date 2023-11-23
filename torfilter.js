@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.2.2
+// @version      1.3
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -48,6 +48,12 @@
 // @match        https://ptsbao.club/details.php*
 // @match        https://pt.eastgame.org/torrents.php*
 // @match        https://pt.eastgame.org/details.php*
+// @match        https://www.hddolby.com/torrents.php*
+// @match        https://www.hddolby.com/details.php*
+// @match        https://pt.hd4fans.org/torrents.php*
+// @match        https://pt.hd4fans.org/details.php*
+// @match        https://hdfans.org/torrents.php*
+// @match        https://hdfans.org/details.php*
 
 // ==/UserScript==
 
@@ -613,13 +619,11 @@ const hdh_passkey = async () => {
   return "" ;
 };
 
-
 //  ====== ptsbao
 const ptsbao_imdbval = (element) => {
   var t = $(element).find("img[title*='IMDb']")
   return t.parent().text();
 };
-
 
 const ptsbao_seeding = (element) => {
   var d = $(element).find("div[title]");
@@ -630,7 +634,92 @@ const ptsbao_downed = (element) => {
   return d.length > 0 && d.attr("title").includes("100");
 };
 
+//  ====== hddolby
+const hddolby_imdbval = (element) => {
+  var t = $(element).find("img[src*='imdb.png']")
+  return t.parent().text();
+};
 
+const hddolby_douban = (element) => {
+  var d = $(element).find("img[src='douban.png']");
+  return d.parent().text();
+};
+
+
+const hddolby_seeding = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  return d.text().includes("100%");
+};
+const hddolby_downed = (element) => {
+  var d = $(element).find("td:nth-child(9)");
+  // return (d.length > 0 && d.css("color") === 'rgb(0, 128, 0)')
+  return d.text().includes("Noseed");
+};
+
+const hddolby_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
+
+//===== hd4fans
+
+const hd4fans_seeding = (element) => {
+  var s = $(element).find("div.progress_seeding");
+  var d = $(element).find("div.progressarea");
+  return s.length > 0 || d.length > 0;
+};
+const hd4fans_downed = (element) => {
+  var d = $(element).find("div.progressarea");
+  return d.length > 0;
+};
+
+const hd4fans_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
+
+//==== hdfans
+const hdfans_imdbval = (element) => {
+  var t = $(element).find("img[title*='imdb']")
+  return t.parent().text();
+};
+
+const hdfans_douban = (element) => {
+  var d = $(element).find("img[title='douban']");
+  return d.parent().text();
+};
+
+
+const hdfans_seeding = (element) => {
+  var s = $(element).find("[title*='leeching']");
+  var d = $(element).find("[title*='seeding']");
+  return s.length > 0 || d.length > 0;
+};
+const hdfans_downed = (element) => {
+  var d = $(element).find("[title*='inactivity']");
+
+  return d && d.length > 0 ;
+};
+
+const hdfans_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
 
 var config = [
   {
@@ -1014,13 +1103,13 @@ var config = [
     useTitleName: 1,
     eleIntnTag: "span.tgf",
     eleCnLangTag: "span.tgy",
-    eleCnSubTag: "span.tzz",
+    eleCnSubTag: 'span:contains("中字"), span:contains("官字")',
     eleDownLink:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
-    filterGY: false,
-    filterZZ: false,
+    filterGY: true,
+    filterZZ: true,
     funcIMDb: hdh_imdbval,
     funcIMDbId: hdh_imdbid,
     funcDouban: hdh_douban,
@@ -1055,7 +1144,7 @@ var config = [
     funcSeeding: rl_seeding,
     funcDownloaded: rl_downed,
     funcGetPasskey: rl_passkey,
-  },  
+  },
   {
     host: "pt.soulvoice.club",
     abbrev: "soulvoice",
@@ -1139,6 +1228,90 @@ var config = [
     funcSeeding: rl_seeding,
     funcDownloaded: rl_downed,
     funcGetPasskey: rl_passkey,
+  },
+  {
+    host: "www.hddolby.com",
+    abbrev: "hddolby",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "span.tgf",
+    eleCnLangTag: "span.tgy",
+    eleCnSubTag: "span.tzz",
+    eleDownLink:
+      "table.torrentname table > tbody > tr >  td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: hddolby_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: hddolby_douban,
+    funcSeeding: hddolby_seeding,
+    funcDownloaded: hddolby_downed,
+    funcGetPasskey: hddolby_passkey,
+  },
+  {
+    host: "pt.hd4fans.org",
+    abbrev: "hd4fans",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname table > tbody > tr >  td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: false,
+    filterZZ: false,
+    funcIMDb: not_supported,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: hd4fans_seeding,
+    funcDownloaded: hd4fans_downed,
+    funcGetPasskey: hd4fans_passkey,
+  },
+  {
+    host: "hdfans.org",
+    abbrev: "hdfans",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "span.tgf",
+    eleCnLangTag: "span.tgy",
+    eleCnSubTag: "span.tzz",
+    eleDownLink:
+      "table.torrentname table > tbody > tr >  td:nth-child(3) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: hdfans_imdbval,
+    funcDouban: hdfans_douban,
+    funcIMDbId: not_supported,
+    funcSeeding: hdfans_seeding,
+    funcDownloaded: hdfans_downed,
+    funcGetPasskey: hdfans_passkey,
   },  
 ];
 
@@ -1596,6 +1769,7 @@ function _getDownloadUrlByPossibleHrefs(pagehtml) {
     "a[href*='passkey']",
     // pthome, ade
     "a[href*='downhash'][href*='https']",
+    "a[href*='downhash'][href*='download.php']",
     "a[href*='passkey'][href*='https']",
     // hdchina
     "a[href*='hash'][href*='https']",
