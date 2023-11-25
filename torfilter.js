@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.4.1
+// @version      1.4.3
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -1838,33 +1838,35 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// modified from PT-Plugin-Plus/resource/schemas/NexusPHP/details.js
 function _getDownloadUrlByPossibleHrefs(pagehtml) {
   const possibleHrefs = [
-    // misc
-    "a[href*='passkey']",
-    // pthome, ade
-    "a[href*='downhash'][href*='https']",
-    "a[href*='downhash'][href*='download.php']",
-    "a[href*='passkey'][href*='https']",
+    // pthome
+    "a[href*='downhash'][href*='https'][class!='forward_a']",
     // hdchina
-    "a[href*='hash'][href*='https']",
-    "a[href*='https://totheglory.im/dl/']"
+    "a[href*='hash'][href*='https'][class!='forward_a']",
+    // misc
+    "a[href*='passkey'][href*='https'][class!='forward_a']",
+    "a[href*='passkey'][class!='forward_a']",
+    "a[href*='https://totheglory.im/dl/']",
   ];
 
-  if (window.location.host == "pt.keepfrds.com"){
-    //frds
-    const dllink = $("input[value*='passkey']", pagehtml);
-    if (dllink.length){
-      return dllink.prop("value")
-    }
-  }
+
+  dllink = null;
   for (const href of possibleHrefs) {
     const query = $(href, pagehtml);
     if (query.length) {
-      return query.prop("href");
+      dllink = query.prop("href");
     }
   }
-  return null;
+  if (!dllink) {
+    dllink =
+      $("input[value*='passkey']").prop("value") ||
+      $("td.rowfollow:contains('&passkey='):last").text() ||
+      $("a[href*='download'][href*='?id']:first").attr("href") ||
+      $("a[href*='download.php?']:first").attr("href");
+  }
+  return dllink;
 }
 
 
