@@ -1233,7 +1233,7 @@ var config = [
     eleCnLangTag: 'span:contains("国语")',
     eleCnSubTag: 'span:contains("中字")',
     eleDownLink:
-      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    '#torrents_td > table > tbody > tr > td  a[href*="passkey"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: true,
