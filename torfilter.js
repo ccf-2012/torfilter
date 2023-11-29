@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.4.3
+// @version      1.4.4
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -77,20 +77,16 @@ const skip_passkey = async () => {
 
 //  ====== pter
 const pter_imdbval = (element) => {
-  var t = $(element).find(
-    "td:nth-child(2) > table > tbody > tr > td > a:nth-child(1) > span"
-  );
+  var t = $(element).find( "a span[data-imdbid]" );
   return t.text();
 };
 const pter_imdbid = (element) => {
-  var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(7) span");
-  // imdbId: row.find("a span[data-imdbid]").length > 0 ? row.find("a span[data-imdbid]").first().attr("data-imdbid") : null
+  var t = $(element).find("a span[data-imdbid]")
   return (t && t.attr("data-imdbid")) ? 'tt'+t.attr("data-imdbid") : ''
 };
 
 const pter_douban = (element) => {
-  var d = $(element).find(
-    "td:nth-child(2) > table > tbody > tr > td > a:nth-child(2) > span"
+  var d = $(element).find("a span[data-doubanid]" 
   );
   return d.text();
 };
@@ -775,11 +771,12 @@ var config = [
     eleTorTable: "#torrenttable",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font",
     eleTorList: "#torrenttable > tbody > tr",
-    eleTorItem: " table > tbody > tr > td > div > div:nth-child(1) > a",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) >> a",
+    // eleTorItem: " table > tbody > tr > td > div > div:nth-child(1) > a",
     eleTorItemDesc: "table > tbody > tr > td > div > div:nth-child(2) > span",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
-    eleTorItemAdded: "td:nth-child(4) > span",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "> td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "a.chs_tag-gf",
     eleCnLangTag: "a.chs_tag-gy",
@@ -806,8 +803,8 @@ var config = [
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > font",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "div.tag-gf",
@@ -836,9 +833,9 @@ var config = [
       "td.rowfollow.torrents-box > div.torrents-name > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc:
       "td > div.torrents-name > table > tbody > tr > td:nth-child(1) > span",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
-    eleTorItemAdded: "td:nth-child(4) > span",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "> td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "span.tgf",
     eleCnLangTag: "span.tgy",
@@ -865,8 +862,8 @@ var config = [
     eleTorList: "#torrenttable > tbody > tr",
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "div.tag-gf",
@@ -893,8 +890,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: 'span:contains("官组")',
@@ -921,8 +918,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "div.torrent-title > a",
     eleTorItemDesc: "div.torrent-smalldescr",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "",
@@ -977,7 +974,7 @@ var config = [
     eleTorList: "#form_torrent > table > tbody > tr",
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSize: "> td:nth-child(5)",
     eleTorItemSeednum: "td:nth-child(6) > b > a",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 2,
@@ -1005,8 +1002,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "div.tag-gf",
@@ -1060,7 +1057,7 @@ var config = [
     eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
     eleTorItem: "td > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
+    eleTorItemSize: "> td:nth-child(5)",
     eleTorItemSeednum: "td:nth-child(6) > b > a",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
@@ -1117,7 +1114,7 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "td:nth-child(3) > div:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(3) > div:nth-child(2)",
-    eleTorItemSize: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(6)",
     eleTorItemSeednum: "td:nth-child(7)",
     eleTorItemAdded: "td:nth-child(5) > span",
     useTitleName: 0,
@@ -1144,8 +1141,8 @@ var config = [
     eleTorList: "#torrenttable > tbody > tr",
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "span.tgf",
@@ -1172,8 +1169,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: 'span:contains("官方")',
@@ -1200,8 +1197,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: 'span:contains("官方")',
@@ -1228,7 +1225,7 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(6)",
     eleTorItemSeednum: "td:nth-child(7)",
     eleTorItemAdded: "td:nth-child(5) > span",
     useTitleName: 1,
@@ -1256,8 +1253,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "td:nth-child(2) > table > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "div.tag-gf",
@@ -1284,8 +1281,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "span.tgf",
@@ -1312,8 +1309,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: 'span:contains("官组")',
@@ -1340,8 +1337,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: 'span:contains("官组")',
@@ -1368,8 +1365,8 @@ var config = [
     eleTorList: "table.torrents > tbody > tr",
     eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1) > a",
     eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
-    eleTorItemSize: "td:nth-child(5)",
-    eleTorItemSeednum: "td:nth-child(6)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
     eleIntnTag: "span.tgf",
@@ -2048,8 +2045,9 @@ var asyncApiDownload = async (html, doDownload) => {
       let dllink = getDownloadLink(torlist[index], passKeyStr);
       let siteId = getSiteId(detailLink, imdbid);
 
-      if (dllink && seednum > 0) {
-        // check detal page imdb only when doDownload
+      // if (dllink && seednum > 0) {
+      if (dllink ) {
+          // check detal page imdb only when doDownload
         // hdsky exception: need fetch detail page
         if (doDownload && (!imdbid  || THISCONFIG.host == "hdsky.me")) {
           let res = await fetchDetailPageGetIMDbAndDlink(detailLink, dllink);
