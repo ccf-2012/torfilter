@@ -56,6 +56,16 @@
 // @match        https://hdfans.org/details.php*
 // @match        https://pthome.net/torrents.php*
 // @match        https://pthome.net/details.php*
+// @match        https://kp.m-team.cc/torrents*
+// @match        https://kp.m-team.cc/movie*
+// @match        https://kp.m-team.cc/details*
+// @match        https://piggo.me/torrents*
+// @match        https://piggo.me/special*
+// @match        https://piggo.me/details*
+// @match        https://discfan.net/torrents*
+// @match        https://discfan.net/details*
+// @match        https://www.tjupt.org/torrents*
+// @match        https://www.tjupt.org/details*
 
 // ==/UserScript==
 
@@ -733,12 +743,12 @@ const hdfans_passkey = async () => {
 
 //===== pthome
 const pthome_imdbval = (element) => {
-  var t = $(element).find("img[src*='imdb.png']")
+  var t = $(element).find("img[src*='imdb']")
   return t.parent().text();
 };
 
 const pthome_douban = (element) => {
-  var d = $(element).find("img[src='douban.png']");
+  var d = $(element).find("img[src='douban']");
   return d.parent().text();
 };
 
@@ -763,6 +773,28 @@ const pthome_downed = (element) => {
   var d = $(element).find("td:nth-child(9)");
   return d.text().includes("100%");
 };
+
+// m-team
+const mteam_imdbval = (element) => {
+  var t = $(element).find( "a[href*='imdb']" );
+  return t.text();
+};
+const mteam_imdbid = (element) => {
+  var t = $(element)
+    .find("a[href*='imdb']" )
+    .attr("href");
+
+  if (t) {
+    var m = t.match(/title\/(tt\d+)/);
+  }
+  return m ? m[1] : "";
+};
+
+const mteam_douban = (element) => {
+  var d = $(element).find("a[href*='douban']");
+  return d.text();
+};
+
 
 var config = [
   {
@@ -1261,7 +1293,7 @@ var config = [
     eleCnLangTag: "div.tag-gy",
     eleCnSubTag: "div.tag-zz",
     eleDownLink:
-      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    'table.torrentname  > tbody > tr  a[href*="download.php"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -1289,7 +1321,7 @@ var config = [
     eleCnLangTag: "span.tgy",
     eleCnSubTag: "span.tzz",
     eleDownLink:
-      "table.torrentname table > tbody > tr >  td:nth-child(2) > a:nth-child(1)",
+     'table.torrentname  > tbody > tr  a[href*="download.php"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: true,
@@ -1317,7 +1349,7 @@ var config = [
     eleCnLangTag: 'span:contains("国语")',
     eleCnSubTag: 'span:contains("中字")',
     eleDownLink:
-      "table.torrentname table > tbody > tr >  td:nth-child(2) > a:nth-child(1)",
+     'table.torrentname  > tbody > tr  a[href*="download.php"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: false,
@@ -1345,7 +1377,7 @@ var config = [
     eleCnLangTag: 'span:contains("国语")',
     eleCnSubTag: 'span:contains("中字")',
     eleDownLink:
-      "table.torrentname table > tbody > tr >  td:nth-child(3) > a:nth-child(1)",
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: true,
@@ -1373,7 +1405,7 @@ var config = [
     eleCnLangTag: "span.tgy",
     eleCnSubTag: 'span:contains("中字"), span:contains("官字")',
     eleDownLink:
-      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
     filterGY: true,
@@ -1385,6 +1417,118 @@ var config = [
     funcDownloaded: pthome_downed,
     funcGetPasskey: hddolby_passkey,
   },
+  {
+    host: "discfan.net",
+    abbrev: "discfan",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr  a[href*='details.php']",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: mteam_imdbval,
+    funcDouban: mteam_douban,
+    funcIMDbId: mteam_imdbid,
+    funcSeeding: hdfans_seeding,
+    funcDownloaded: hdfans_downed,
+    funcGetPasskey: hdfans_passkey,
+  },
+  {
+    host: "www.tjupt.org",
+    abbrev: "tjupt",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr  a[href*='details.php']",
+    eleTorItemDesc: "table.torrentname > tbody > tr a[href*='details.php']",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官方")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: hdfans_imdbval,
+    funcDouban: hdfans_douban,
+    funcIMDbId: not_supported,
+    funcSeeding: hdfans_seeding,
+    funcDownloaded: hdfans_downed,
+    funcGetPasskey: hdfans_passkey,
+  },
+  {
+    host: "piggo.me",
+    abbrev: "piggo",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr  a[href*='details.php']",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: hdfans_imdbval,
+    funcDouban: hdfans_douban,
+    funcIMDbId: not_supported,
+    funcSeeding: hdfans_seeding,
+    funcDownloaded: hdfans_downed,
+    funcGetPasskey: hdfans_passkey,
+  }, 
+  {
+    host: "kp.m-team.cc",
+    abbrev: "m-team",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > div > table > tbody > tr > td > p:nth-child(3) > font:nth-child(4)",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr  a[href*='details.php']",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(1)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: '',
+    eleCnLangTag: 'img.label_dub',
+    eleCnSubTag: 'img.label_sub',
+    eleDownLink:
+      'table.torrentname  > tbody > tr  a[href*="download.php"]',
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: mteam_imdbval,
+    funcDouban: mteam_douban,
+    funcIMDbId: mteam_imdbid,
+    funcSeeding: hdfans_seeding,
+    funcDownloaded: hdfans_downed,
+    funcGetPasskey: hdfans_passkey,
+  },  
 ];
 
 var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
