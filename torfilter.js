@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.5.0
+// @version      1.5.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -948,21 +948,21 @@ var config = [
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
     eleTorList: "table.torrents > tbody > tr",
-    eleTorItem: "div.torrent-title > a",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(1)  a",
     eleTorItemDesc: "div.torrent-smalldescr",
     eleTorItemSize: "> td:nth-child(5)",
     eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
-    eleIntnTag: "",
-    eleCnLangTag: "",
-    eleCnSubTag: "",
+    eleIntnTag: 'span:contains("CMCT")',
+    eleCnLangTag: 'span:contains("国配")',
+    eleCnSubTag: 'span:contains("中字")',
     eleDownLink:
       "table.torrentname > tbody > tr > td:nth-child(2)  a",
     eleCatImg: "td:nth-child(1) > a > img",
     eleDetailTitle: "#top",
-    filterGY: false,
-    filterZZ: false,
+    filterGY: true,
+    filterZZ: true,
     funcIMDb: ssd_imdbval,
     funcIMDbId: ssd_imdbid,
     funcDouban: ssd_douban,
