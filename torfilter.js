@@ -66,6 +66,8 @@
 // @match        https://discfan.net/details*
 // @match        https://www.tjupt.org/torrents*
 // @match        https://www.tjupt.org/details*
+// @match        https://lemonhd.club/torrents*
+// @match        https://lemonhd.club/details*
 
 // ==/UserScript==
 
@@ -1139,7 +1141,7 @@ var config = [
   },
   // TODO: gazella, animate cat fails
   {
-    host: "lemonhd.org",
+    host: "lemonhd.club",
     abbrev: "lhd",
     eleTorTable: "table.torrents",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
