@@ -1689,6 +1689,28 @@ function sizeStrToGB(sizeStr) {
   return size;
 }
 
+function sizeStrToBytes(sizeStr) {
+  var regex = /[+-]?\d+(\.\d+)?/g;
+  var sizeStr2 = sizeStr.replace(/,/g, "");
+  var num = sizeStr2.match(regex).map(function (v) {
+    return parseFloat(v);
+  });
+  var size = 0;
+  if (sizeStr.match(/(KB|KiB)/i)) {
+    size = num * 2**10;
+  } else if (sizeStr.match(/(MB|MiB)/i)) {
+    size = num * 2**20;
+  } else if (sizeStr.match(/(GB|GiB)/i)) {
+    size = num * 2**30;
+  } else if (sizeStr.match(/(TB|TiB)/i)) {
+    size = num * 2**40;
+  } else {
+    size = num;
+  }
+
+  return Math.trunc(size);
+}
+
 function getTorSizeRange(rangestr) {
   let m = rangestr.match(/(\d+)([,，-]\s*(\d+))?/);
   if (m) {
@@ -2068,6 +2090,21 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
   });
 };
 
+
+function getSubtitle(){
+  let subtitle = $("td:contains('副标题') + td")
+  return subtitle.text()
+}
+
+function getPageTorSize(){
+  let infotext = $("td:contains('基本信息') + td")
+  let datas = /大小[^0-9]*([\d\.]+\s*[MGT]B)/.exec( infotext.text() );
+  if (datas && datas.length > 1) {
+    return sizeStrToBytes(datas[1]);
+  }
+  return 0
+}
+
 var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
@@ -2078,8 +2115,11 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
     let siteId = getSiteId(document.URL, imdbid);
+    let torsizeint = getPageTorSize();
+    // console.log(torsizeint);
     var tordata = {
       torname: titlestr,
+      torsize: torsizeint,
       imdbid: imdbid,
       downloadlink: dllink,
       siteid: siteId,
@@ -2164,6 +2204,8 @@ function getSiteId(detailLink, imdbstr){
   return THISCONFIG.abbrev + "_" + sid
 }
 
+
+
 var DUPECHECKED = false;
 var asyncApiDownload = async (html, doDownload) => {
   let dupeChecked = DUPECHECKED
@@ -2201,8 +2243,11 @@ var asyncApiDownload = async (html, doDownload) => {
           dllink = res[1];
           console.log("DETAIL_PAGE: ", titlestr, imdbid);
         }
+        let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
+        
         var tordata = {
           torname: titlestr,
+          torsize: sizeStrToBytes(sizestr),
           imdbid: imdbid,
           downloadlink: dllink,
           siteid: siteId,
