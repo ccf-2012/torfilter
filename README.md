@@ -72,7 +72,8 @@
 ### 提交查重下载后，返回几种结果
 * 提交下载后，页面中种子背景会改为若干种可能的颜色 ：
 ![3种结果](https://ptpimg.me/3cgnss.png)
-> 图中filterapi，已改名dupapi，since 2022.10.12
+> ~~图中filterapi，已改名dupapi，since 2022.10.12~~
+> 图中filterapi，已改名torll，since 2024.12.26
 
 1. 库中没有，提交qBittorrent下载了
 2. 库中已有，跳过，不下载
@@ -81,8 +82,10 @@
 5. since 2022.10.12, 新增一种颜色`darkturquoise`，在种子列表页无法取得下载链接时，表示未重复但不下载
 
 
------
+以下已经失效，torfilter 现在配合 torll 使用
 
+-----
+~~
 # 本地下载入库api服务 dupapi
 
 ## 前置准备
@@ -190,3 +193,4 @@ curl -i -H "Content-Type: application/json" -X POST -d '{"torname" : "The Frozen
 -----
 *** 一些原来的小程序，已经整合到新版 torcp 中，未来再考虑开放
 
+~~

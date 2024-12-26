@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.5.4
+// @version      1.6
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -72,8 +72,7 @@
 // ==/UserScript==
 
 const API_SERVER = 'http://192.168.5.6:5006';
-const API_AUTH_USER = "admin";
-const API_AUTH_PASS = "password";
+const API_AUTH_KEY = "some_api_key";
 
 
 const API_CHECKDUP = API_SERVER + '/api/checkdupeonly';
@@ -1965,7 +1964,7 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
     data: JSON.stringify(tordata),
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Basic " + btoa(API_AUTH_USER + ":" + API_AUTH_PASS)
+      "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
       if (response.status == 202) {
@@ -2064,7 +2063,7 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
     data: JSON.stringify(tordata),
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Basic " + btoa(API_AUTH_USER + ":" + API_AUTH_PASS)
+      "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
       if (response.status == 202) {
