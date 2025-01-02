@@ -899,9 +899,9 @@ var config = [
     eleTorItemSeednum: "> td:nth-child(6)",
     eleTorItemAdded: "td:nth-child(4) > span",
     useTitleName: 1,
-    eleIntnTag: "div.tag-gf",
-    eleCnLangTag: "div.tag-gy",
-    eleCnSubTag: "div.tag-zz",
+    eleIntnTag: "span.tag-gf",
+    eleCnLangTag: "span.tag-gy",
+    eleCnSubTag: "span.tag-zz",
     eleDownLink:
       "td:nth-child(2) > table > tbody > tr > td:nth-child(5) > a:nth-child(1)",
     eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
