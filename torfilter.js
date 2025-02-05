@@ -828,6 +828,35 @@ var config = [
     funcGetPasskey: skip_passkey,
   },
   {
+    host: "chddiy.xyz",
+    abbrev: "chd",
+    eleTorTable: "#outer > table > tbody > tr > td > table",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(3) > font",
+    eleTorList: "#outer > table > tbody > tr > td > table > tbody > tr",
+    eleTorItem: "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > a",
+    eleTorItemDesc:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(1) > font",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: "div.tag-gf",
+    eleCnLangTag: "div.tag-gy",
+    eleCnSubTag: "div.tag-sub",
+    eleDownLink:
+      "td:nth-child(2) > table > tbody > tr > td:nth-child(2) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a:nth-child(1) > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: chd_imdb,
+    funcIMDbId: not_supported,
+    funcDouban: not_supported,
+    funcSeeding: chd_seeding,
+    funcDownloaded: chd_downed,
+    funcGetPasskey: chd_passkey,
+  },
+  {
     host: "chdbits.co",
     abbrev: "chd",
     eleTorTable: "#outer > table > tbody > tr > td > table",
@@ -1866,10 +1895,12 @@ var onClickFilterList = (html) => {
       tortime = " ";
     }
 
-    let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
-    let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
-    if (imdbMinVal > 0.1 && imdbval < imdbMinVal && doubanval < imdbMinVal) {
-      keepShow = false;
+    if (imdbMinVal > 0.1) {
+      let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
+      let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
+      if ((imdbval > 0.1 && imdbval < imdbMinVal) || (doubanval > 0.1 && doubanval < imdbMinVal)) {
+        keepShow = false;
+      }
     }
     if ($("#titleregex").val()) {
       let regex = new RegExp($("#titleregex").val(), "gi");
