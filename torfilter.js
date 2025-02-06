@@ -20,6 +20,8 @@
 // @match        https://ptchdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
 // @match        https://audiences.me/details.php*
+// @match        https://sunnypt.top/torrents.php*
+// @match        https://sunnypt.top/details.php*
 // @match        https://ourbits.club/torrents.php*
 // @match        https://ourbits.club/details.php*
 // @match        https://springsunday.net/torrents.php*
@@ -915,6 +917,35 @@ var config = [
     funcDownloaded: ade_downed,
     funcGetPasskey: ade_passkey,
     // eleTorDetailTable: "tr:contains('副标题'):last",
+  },
+
+  {
+    host: "sunnypt.top",
+    abbrev: "sunny",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font:nth-child(4) > b",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官组")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: rl_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: rl_douban,
+    funcSeeding: rl_seeding,
+    funcDownloaded: rl_downed,
+    funcGetPasskey: rl_passkey,
   },
   {
     host: "ourbits.club",
