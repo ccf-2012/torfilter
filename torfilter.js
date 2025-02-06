@@ -14,8 +14,10 @@
 // @match        https://*pterclub.com/torrents.php*
 // @match        https://*pterclub.com/officialgroup*
 // @match        https://pterclub.com/details.php*
-// @match        https://chdbits.co/torrents.php*
+// @match        https://*chddiy.xyz/torrents.php*
+// @match        https://*chddiy.xyz/torrents.php*
 // @match        https://chdbits.co/details.php*
+// @match        https://chdbits.co/torrents.php*
 // @match        https://ptchdbits.co/torrents.php*
 // @match        https://ptchdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
