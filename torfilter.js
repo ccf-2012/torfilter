@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.6.6
+// @version      1.6.7
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
+// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
@@ -18,6 +18,7 @@
 // @match        https://*chddiy.xyz/details.php*
 // @match        https://chdbits.co/details.php*
 // @match        https://chdbits.co/torrents.php*
+// @match        https://chdbits.co/details.php*
 // @match        https://ptchdbits.co/torrents.php*
 // @match        https://ptchdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
@@ -413,13 +414,25 @@ const beitai_passkey = async () => {
 const frds_imdbval = (element) => {
   var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > img:nth-child(2)");
   let imdb = "";
-  if (t.attr("src") && t.attr("src").includes("imdb")) {
+  if (t.attr("src")) {
     imdb = t.parent().text();
     imdb = imdb.replace(/(-+|\d+\.\d*)\s*$/, '').trim()
   }
   return imdb;
 };
 
+const frds_doubanval = (element) => {
+  var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > img:nth-child(2)");
+  let douban = "";
+  if (t.attr("src")) {
+    douban = t.parent().text();
+    douban = douban.match(/(\d+\.\d*)\s*$/);
+    if (douban) {
+      douban = douban[1];
+    }
+  }
+  return douban;
+};
 
 const frds_passkey = async () => {
   let html = await $.get("usercp.php");
@@ -1084,7 +1097,7 @@ var config = [
     filterZZ: false,
     funcIMDb: frds_imdbval,
     funcIMDbId: not_supported,
-    funcDouban: not_supported,
+    funcDouban: frds_doubanval,
     funcSeeding: frds_seeding,
     funcDownloaded: frds_downed,
     funcGetPasskey: frds_passkey,
@@ -1634,17 +1647,21 @@ function addFilterPanel() {
       </table>
       </td>
 
-      <td style='width: 190px; border: none;'>
+      <td style='width: 280px; border: none;'>
         <table>
           <tr>
-          <td style=' border: none;'>
-          <div>标题不含 <input style='width: 110px;' id='titleregex' value="" />
-          </div>
+          <td style='border: none; width: 120px;'>
+          <div style='display: flex; align-items: center;'>标题不含<input style='width: 50px; margin-left: 5px;' id='titleregex' value="" /></div>
+          </td>
+          <td style='border: none; width: 120px;'>
+          <div style='display: flex; align-items: center;'>标题含<input style='width: 50px; margin-left: 5px;' id='titleinclude' value="" /></div>
           </td>
         </tr><tr>
-          <td style='border: none;'>
-          <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
-          </div>
+          <td style='border: none; width: 120px;'>
+          <div style='display: flex; align-items: center;'>描述不含<input style='width: 50px; margin-left: 5px;' id='titledescregex' value="" /></div>
+          </td>
+          <td style='border: none; width: 120px;'>
+          <div style='display: flex; align-items: center;'>描述含<input style='width: 50px; margin-left: 5px;' id='titledescinclude' value="" /></div>
           </td>
         </tr>
       </table>
@@ -1655,10 +1672,14 @@ function addFilterPanel() {
       </div>
       </td>
 
-      <td style='width: 120px; border: none;'>
-      <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
-      </div>
-      </td>
+     <td style='width: 160px; border: none;'>
+  <div style='display: flex; align-items: center;'>评分:
+    <input style='width: 35px; margin-right: 5px;' id='minimdb' value="0" /> -
+    <input style='width: 35px; margin-left: 5px;' id='maximdb' value="10" />
+  </div>
+</td>
+
+
       <td style='width: 60px; border: none;'>
           <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
           过滤
@@ -1666,7 +1687,7 @@ function addFilterPanel() {
       </td>
       <td style='width: 85px; border: none;'>
           <button type="button" id="btn-copydllink" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-          拷贝链接
+          链接
           </button>
       </td>
       <td style='width: 70px; border: none;'>
@@ -1796,21 +1817,27 @@ function saveToCookie(filterParam) {
 
 function saveParamToCookie() {
   let paramStr =
-    "minimdb=" +
+   "minimdb=" +
     $("#minimdb").val() +
-    "&sizerange=" +
+   "&maximdb=" +
+    $("#maximdb").val() +
+   "&sizerange=" +
     $("#sizerange").val() +
-    "&titleregex=" +
+   "&titleregex=" +
     $("#titleregex").val() +
-    "&descregex=" +
+   "&descregex=" +
     $("#titledescregex").val() +
-    "&seeding=" +
+   "&titleinclude=" +
+    $("#titleinclude").val() +
+   "&titledescinclude=" +
+    $("#titledescinclude").val() +
+   "&seeding=" +
     $("#seeding").is(":checked") +
-    "&downloaded=" +
+   "&downloaded=" +
     $("#downloaded").is(":checked") +
-    "&chnsub=" +
+   "&chnsub=" +
     $("#chnsub").is(":checked") +
-    "&nochnlang=" +
+   "&nochnlang=" +
     $("#nochnlang").is(":checked");
   saveToCookie(paramStr);
 }
@@ -1833,6 +1860,9 @@ function fillParam(filterParam) {
       if (m[1] == "minimdb") {
         $("#minimdb").val(m[2]);
       }
+      if (m[1] == "maximdb") {
+        $("#maximdb").val(m[2]);
+      }
       if (m[1] == "sizerange") {
         $("#sizerange").val(m[2]);
       }
@@ -1841,6 +1871,12 @@ function fillParam(filterParam) {
       }
       if (m[1] == "descregex") {
         $("#titledescregex").val(m[2]);
+      }
+      if (m[1] == "titleinclude") {
+        $("#titleinclude").val(m[2]);
+      }
+      if (m[1] == "titledescinclude") {
+        $("#titledescinclude").val(m[2]);
       }
       if (m[1] == "seeding") {
         $("#seeding").prop("checked", m[2] == "true");
@@ -1887,6 +1923,7 @@ var onClickFilterList = (html) => {
   $("#process-log").text("处理中...");
   let torlist = $(html).find(THISCONFIG.eleTorList);
   let imdbMinVal = parseFloat($("#minimdb").val()) || 0.0;
+  let imdbMaxVal = parseFloat($("#maximdb").val()) || 10.0;
   let sizerange = getTorSizeRange($("#sizerange").val());
   saveParamToCookie();
   let filterCount = 0;
@@ -1928,25 +1965,35 @@ var onClickFilterList = (html) => {
       tortime = " ";
     }
 
-    if (imdbMinVal > 0.1) {
-      let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
-      let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
-      if ((imdbval > 0.1 && imdbval < imdbMinVal) || (doubanval > 0.1 && doubanval < imdbMinVal)) {
-        keepShow = false;
+    let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
+    let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
+    if (imdbval > 0.1 || doubanval > 0.1) {
+      let inRange = false;
+      if (doubanval > 0.1 && doubanval >= imdbMinVal && doubanval <= imdbMaxVal) {
+        inRange = true;
       }
+      if (imdbval > 0.1 && imdbval >= imdbMinVal && imdbval <= imdbMaxVal) {
+        inRange = true;
+      }
+      keepShow = inRange;
     }
+    else {
+      keepShow = true;  // 如果没有评分信息，则不进行过滤
+    } 
+
+
     if ($("#titleregex").val()) {
       let regex = new RegExp($("#titleregex").val(), "gi");
       if (titlestr.match(regex)) {
         keepShow = false;
       }
     }
-    let titledesc = ""
+    let titledesc = "";
     if ($("#titledescregex").val()) {
       let regex = new RegExp($("#titledescregex").val(), "gi");
       let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
-      if (titleele){
-        titledesc = titleele.text()
+      if (titleele) {
+        titledesc = titleele.text();
         titledesc = titledesc.replace(/[\n\r]+/g, '');
         titledesc = titledesc.replace(/\s{2,10}/g, ' ');
       }
@@ -1955,9 +2002,30 @@ var onClickFilterList = (html) => {
       }
     }
 
-    // if ($("#intn_tor").is(":checked") && $(torlist[index]).find(THISCONFIG.eleIntnTag).length <= 0) {
-    //     keepShow = false;
-    // }
+    // 新增：标题含过滤
+    if ($("#titleinclude").val()) {
+      let regex = new RegExp($("#titleinclude").val(), "gi");
+      if (!titlestr.match(regex)) {
+        keepShow = false;
+      }
+    }
+
+    // 新增：描述含过滤
+    if ($("#titledescinclude").val()) {
+      let regex = new RegExp($("#titledescinclude").val(), "gi");
+      if (!titledesc) {
+        let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
+        if (titleele) {
+          titledesc = titleele.text();
+          titledesc = titledesc.replace(/[\n\r]+/g, '');
+          titledesc = titledesc.replace(/\s{2,10}/g, ' ');
+        }
+      }
+      if (!titledesc.match(regex)) {
+        keepShow = false;
+      }
+    }
+
     if ($("#seeding").is(":checked") && THISCONFIG.funcSeeding(element)) {
       keepShow = false;
     }
@@ -1983,7 +2051,7 @@ var onClickFilterList = (html) => {
       $(element).show();
     } else {
       $(element).hide();
-      console.log("Filtered: "+ titlestr+" : "+titledesc)
+      console.log("Filtered: "+ titlestr+" : "+titledesc);
       filterCount++;
     }
   }
