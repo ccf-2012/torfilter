@@ -2076,7 +2076,7 @@ function _getDownloadUrlByPossibleHrefs(pagehtml) {
     "a[href*='hash'][href*='https'][class!='forward_a']",
     // misc
     "a[href*='passkey'][href*='https'][class!='forward_a']",
-    "a[href*='passkey'][class!='forward_a']",
+    "a[href*='passkey'][href*='&fl=1']",
     "a[href*='https://totheglory.im/dl/']",
   ];
 
