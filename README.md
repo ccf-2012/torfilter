@@ -6,13 +6,14 @@
 
 ![dataflow](https://ptpimg.me/07ivzz.png)
 
-1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在PT站页面添加一些辅助过滤的功能，选中的种子可以提交信息给`dupapi.py`进行处理
-2. `dupapi.py` 是一个api服务，可对提交来的信息在本地的媒体库中查重，并将下载链接交给qBittorrent启动下载，同时打上imdb信息标签
+1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在PT站页面添加一些辅助过滤的功能，选中的种子可以提交信息给`torll`进行处理
+2. `torll` 是一个api服务，可对提交来的信息在本地的媒体库中查重，并将下载链接交给qBittorrent启动下载，同时打上imdb信息标签
 3. qBittorrent下载完成调用脚本将文件和imdb信息标签交 `torcp` 进行目录重新组织，参考 [这里的详细文档](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md)
 4. 组织好的媒体文件，Plex可刮削入库
 
 
 ## Last update:
+* 2025.7.7: mmt标题包含等commit
 * 2024.10.19: lemonhd
 * 2023.11.23: hddolby, hd4fans, hdfans, pthome
 * 2023.9.6: wtsakura, soulvoice, ptsbao,  tlf 
