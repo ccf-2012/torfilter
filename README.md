@@ -13,6 +13,7 @@
 
 
 ## Last update:
+* 2025.7.20: qingwapt
 * 2025.7.7: mmt标题包含等commit
 * 2024.10.19: lemonhd
 * 2023.11.23: hddolby, hd4fans, hdfans, pthome
@@ -44,10 +45,10 @@
 ## 功能
 油猴脚本，在种子列表页中:
 1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-    * 当前支持pter, chd, aud, ob, ssd, frds, beitai, ttg, hdc, hds, hh，redleaves, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, hd4fans, hdfans, pthome
+    * 当前支持pter, chd, aud, ob, ssd, frds, beitai, ttg, hdc, hds, hh，redleaves, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, hd4fans, hdfans, pthome, qingwapt
     * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
 2. 新增一列快速认领，当前仅支持猫站
-3. 配合 dupapi.py 实现查重下载入库 (since 2022.10.9)
+3. 配合 torll 实现查重下载入库 
 
 * 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
 * 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
@@ -55,11 +56,11 @@
 
 
 ### 列表页的查重与下载
-* “仅查重” 与 “查&下” 都是通过后台dupapi进行;
+* “仅查重” 与 “查&下” 都是通过后台torll进行;
 * ob, ssd, aud, pter, ttg, hds 等站列表页有IMDb标识，torfilter会用IMDb来查重并在推送qbit下载时添加标签(tag)
 * frds, chd, beitai, hdc等站在列表页没有IMDb链接信息，在种子详情页可能会获取到，则：
-  - 在查重时，torfilter会使用种子名称提交查重，后台dupapi会以torcp解析种子名称后查找TMDb再进行查重。这种依赖种子名称查TMDb有可能失误；
-  - 在下载时，torfilter将去获取种子详情页，并提取IMDb信息，之后再提交后台dupapi进行下载，这样也会在qbit中对种子加上标签；
+  - 在查重时，torfilter会使用种子名称提交查重，后台torll会以torcp解析种子名称后查找TMDb再进行查重。这种依赖种子名称查TMDb有可能失误；
+  - 在下载时，torfilter将去获取种子详情页，并提取IMDb信息，之后再提交后台torll进行下载，这样也会在qbit中对种子加上标签；
   - 如果先点选了“仅查重”，再点“查&下”，则在下载时，会仅对“仅查重”时标绿的种子进行详情页的获取及下载，对于上述列表页没有IMDb信息的站，推荐如此操作下载，否则直接“查&下”将对可见列表中每个条目去站点获取详情页；
 * 在“查&下”过程中，每个条目下载后有约2秒的间隔，在“仅查重”时则只有50ms；
 
@@ -79,13 +80,15 @@
 1. 库中没有，提交qBittorrent下载了
 2. 库中已有，跳过，不下载
 3. TMDb没有查到，当前也是跳过不下载
-4. dupapi无法提交给下载器出错时，返回400，在页面上显示红色
+4. torll无法提交给下载器出错时，返回400，在页面上显示红色
 5. since 2022.10.12, 新增一种颜色`darkturquoise`，在种子列表页无法取得下载链接时，表示未重复但不下载
 
 
 以下已经失效，torfilter 现在配合 torll 使用
 
 -----
+> 早期的单独查重下载程序，现在已经整合为 torll
+
 ~~
 # 本地下载入库api服务 dupapi
 

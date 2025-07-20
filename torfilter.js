@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.6.8
+// @version      1.7.0
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -73,6 +73,8 @@
 // @match        https://www.tjupt.org/details*
 // @match        https://lemonhd.club/torrents*
 // @match        https://lemonhd.club/details*
+// @match        https://*qingwapt.com/torrents*
+// @match        https://*qingwapt.com/details*
 
 // ==/UserScript==
 
@@ -811,6 +813,41 @@ const mteam_douban = (element) => {
   var d = $(element).find("a[href*='douban']");
   return d.text();
 };
+
+//  ====== qingwa
+const qingwa_imdbval = (element) => {
+  var t = $(element).find("img[title='imdb']");
+  return t.parent().text();
+};
+
+
+const qingwa_douban = (element) => {
+  var d = $(element).find("img[title='douban']");
+  return d.parent().text();
+};
+
+const qingwa_seeding = (element) => {
+  var s = $(element).find("[title*='seeding']");
+  return s && s.length > 0;
+};
+
+
+const qingwa_downed = (element) => {
+  var d = $(element).find("[title*='leeching']");
+  return d && d.length > 0;
+};
+
+
+const qingwa_passkey = async () => {
+  let html = await $.get("usercp.php");
+  let passkeyRow = $(html).find('tr:contains("密钥"):last');
+  if (passkeyRow.length > 0) {
+    var key = passkeyRow.find("td:last").text();
+    return "&passkey=" + key.trim();
+  }
+  return "";
+};
+
 
 
 var config = [
@@ -1604,6 +1641,34 @@ var config = [
     funcSeeding: hdfans_seeding,
     funcDownloaded: hdfans_downed,
     funcGetPasskey: hdfans_passkey,
+  },
+  {
+    host: "qingwapt.com",
+    abbrev: "qingwapt",
+    eleTorTable: "table.torrents",
+    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font:nth-child(4) > b",
+    eleTorList: "table.torrents > tbody > tr",
+    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
+    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
+    eleTorItemSize: "> td:nth-child(5)",
+    eleTorItemSeednum: "> td:nth-child(6)",
+    eleTorItemAdded: "td:nth-child(4) > span",
+    useTitleName: 1,
+    eleIntnTag: 'span:contains("官方")',
+    eleCnLangTag: 'span:contains("国语")',
+    eleCnSubTag: 'span:contains("中字")',
+    eleDownLink:
+      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
+    eleCatImg: "td:nth-child(1) > a > img",
+    eleDetailTitle: "#top",
+    filterGY: true,
+    filterZZ: true,
+    funcIMDb: qingwa_imdbval,
+    funcIMDbId: not_supported,
+    funcDouban: qingwa_douban,
+    funcSeeding: qingwa_seeding,
+    funcDownloaded: qingwa_downed,
+    funcGetPasskey: qingwa_passkey,
   },  
 ];
 
