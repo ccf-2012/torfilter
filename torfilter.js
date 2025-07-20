@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.7.0
+// @version      1.7.1
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -78,7 +78,7 @@
 
 // ==/UserScript==
 
-const API_SERVER = 'http://192.168.5.10:5006';
+const API_SERVER = 'http://192.168.5.6:5006';
 const API_AUTH_KEY = "something";
 
 
@@ -1983,6 +1983,70 @@ function getItemTitle(item) {
   return titlestr.trim();
 }
 
+function hideElement(element) {
+  if (element) {
+    element.hide();
+    // console.log("Filtered: "+ titlestr);
+  }
+}
+
+
+function checkTorSize(element, sizerange) {
+  if (!sizerange[0] && !sizerange[1]) return true;
+  
+  let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
+  let torsize = sizestr ? sizeStrToGB(sizestr) : 0;
+  
+  if (sizerange[0] && torsize < sizerange[0]) return false;
+  if (sizerange[1] && torsize > sizerange[1]) return false;
+  
+  return true;
+}
+
+function checkImdbRating(element, minVal, maxVal) {
+  let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
+  let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
+  
+  if (imdbval <= 0.1 && doubanval <= 0.1) return true;
+  
+  if (doubanval > 0.1 && doubanval >= minVal && doubanval <= maxVal) return true;
+  if (imdbval > 0.1 && imdbval >= minVal && imdbval <= maxVal) return true;
+  
+  return false;
+}
+
+function checkTitleRegex(titlestr, regex) {
+  if (!regex) return true;
+  return !titlestr.match(new RegExp(regex, "gi"));
+}
+
+function getTorrentDescription(element) {
+  let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
+  if (!titleele) return "";
+  
+  let desc = titleele.text();
+  desc = desc.replace(/[\n\r]+/g, '');
+  desc = desc.replace(/\s{2,10}/g, ' ');
+  return desc;
+}
+
+function checkDescriptionRegex(element, regex) {
+  if (!regex) return true;
+  let desc = getTorrentDescription(element);
+  return !desc.match(new RegExp(regex, "gi"));
+}
+
+function checkTitleInclude(titlestr, includeStr) {
+  if (!includeStr) return true;
+  return titlestr.match(new RegExp(includeStr, "gi"));
+}
+
+function checkDescriptionInclude(element, includeStr) {
+  if (!includeStr) return true;
+  let desc = getTorrentDescription(element);
+  return desc.match(new RegExp(includeStr, "gi"));
+}
+
 var onClickFilterList = (html) => {
   $("#process-log").text("处理中...");
   let torlist = $(html).find(THISCONFIG.eleTorList);
@@ -1991,137 +2055,67 @@ var onClickFilterList = (html) => {
   let sizerange = getTorSizeRange($("#sizerange").val());
   saveParamToCookie();
   let filterCount = 0;
+  
   for (let index = 0; index < torlist.length; ++index) {
     let element = torlist[index];
     let item = $(element).find(THISCONFIG.eleTorItem);
-    if (item.length <= 0) {
-      continue;
-    }
+    if (item.length <= 0) continue;
 
     let titlestr = getItemTitle(item);
     let keepShow = true;
 
-    if (sizerange[0] || sizerange[1]) {
-      let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
-      let torsize = 0;
-      if (sizestr) {
-        torsize = sizeStrToGB(sizestr);
-      }
-      if (sizerange[0] && torsize < sizerange[0]) {
-        keepShow = false;
-      }
-      if (sizerange[1] && torsize > sizerange[1]) {
-        keepShow = false;
-      }
+    // Check size range
+    keepShow = keepShow && checkTorSize(element, sizerange);
+    
+    // Check IMDb/Douban rating
+    keepShow = keepShow && checkImdbRating(element, imdbMinVal, imdbMaxVal);
+    
+    // Check title regex
+    keepShow = keepShow && checkTitleRegex(titlestr, $("#titleregex").val());
+    
+    // Check description regex
+    keepShow = keepShow && checkDescriptionRegex(element, $("#titledescregex").val());
+    
+    // Check title include
+    keepShow = keepShow && checkTitleInclude(titlestr, $("#titleinclude").val());
+    
+    // Check description include  
+    keepShow = keepShow && checkDescriptionInclude(element, $("#titledescinclude").val());
+
+    // Check seeding status
+    if (keepShow && $("#seeding").is(":checked")) {
+      keepShow = !THISCONFIG.funcSeeding(element);
     }
 
-    var seednum = $(element).find(THISCONFIG.eleTorItemSeednum).text().trim();
-    seednum = seednum.replace(/\,/g, "");
-    if (!seednum) {
-      seednum = " ";
+    // Check downloaded status
+    if (keepShow && $("#downloaded").is(":checked")) {
+      keepShow = !THISCONFIG.funcDownloaded(element);
     }
 
-    var tortime;
-    if ($(element).find(THISCONFIG.eleTorItemAdded)[0]) {
-      tortime = $(element).find(THISCONFIG.eleTorItemAdded)[0].title;
-    }
-    if (!tortime) {
-      tortime = " ";
+    // Check Chinese subtitle
+    if (keepShow && THISCONFIG.filterZZ && $("#chnsub").is(":checked")) {
+      keepShow = $(element).find(THISCONFIG.eleCnSubTag).length > 0;
     }
 
-    let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
-    let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
-    if (imdbval > 0.1 || doubanval > 0.1) {
-      let inRange = false;
-      if (doubanval > 0.1 && doubanval >= imdbMinVal && doubanval <= imdbMaxVal) {
-        inRange = true;
-      }
-      if (imdbval > 0.1 && imdbval >= imdbMinVal && imdbval <= imdbMaxVal) {
-        inRange = true;
-      }
-      keepShow = inRange;
-    }
-    else {
-      keepShow = true;  // 如果没有评分信息，则不进行过滤
-    } 
-
-
-    if ($("#titleregex").val()) {
-      let regex = new RegExp($("#titleregex").val(), "gi");
-      if (titlestr.match(regex)) {
-        keepShow = false;
-      }
-    }
-    let titledesc = "";
-    if ($("#titledescregex").val()) {
-      let regex = new RegExp($("#titledescregex").val(), "gi");
-      let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
-      if (titleele) {
-        titledesc = titleele.text();
-        titledesc = titledesc.replace(/[\n\r]+/g, '');
-        titledesc = titledesc.replace(/\s{2,10}/g, ' ');
-      }
-      if (titledesc.match(regex)) {
-        keepShow = false;
-      }
-    }
-
-    // 新增：标题含过滤
-    if ($("#titleinclude").val()) {
-      let regex = new RegExp($("#titleinclude").val(), "gi");
-      if (!titlestr.match(regex)) {
-        keepShow = false;
-      }
-    }
-
-    // 新增：描述含过滤
-    if ($("#titledescinclude").val()) {
-      let regex = new RegExp($("#titledescinclude").val(), "gi");
-      if (!titledesc) {
-        let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
-        if (titleele) {
-          titledesc = titleele.text();
-          titledesc = titledesc.replace(/[\n\r]+/g, '');
-          titledesc = titledesc.replace(/\s{2,10}/g, ' ');
-        }
-      }
-      if (!titledesc.match(regex)) {
-        keepShow = false;
-      }
-    }
-
-    if ($("#seeding").is(":checked") && THISCONFIG.funcSeeding(element)) {
-      keepShow = false;
-    }
-    if ($("#downloaded").is(":checked") && THISCONFIG.funcDownloaded(element)) {
-      keepShow = false;
-    }
-    if (
-      THISCONFIG.filterZZ &&
-      $("#chnsub").is(":checked") &&
-      $(torlist[index]).find(THISCONFIG.eleCnSubTag).length <= 0
-    ) {
-      keepShow = false;
-    }
-    if (
-      THISCONFIG.filterGY &&
-      $("#nochnlang").is(":checked") &&
-      $(torlist[index]).find(THISCONFIG.eleCnLangTag).length > 0
-    ) {
-      keepShow = false;
+    // Check Chinese audio
+    if (keepShow && THISCONFIG.filterGY && $("#nochnlang").is(":checked")) {
+      keepShow = $(element).find(THISCONFIG.eleCnLangTag).length <= 0;
     }
 
     if (keepShow) {
       $(element).show();
+
     } else {
-      $(element).hide();
-      console.log("Filtered: "+ titlestr+" : "+titledesc);
+      hideElement($(element));
+      console.log("Filtered: " + titlestr);
       filterCount++;
     }
   }
+  
   $("#process-log").text("过滤了：" + filterCount);
 };
 
+      
 var asyncCopyLink = async (html) => {
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
