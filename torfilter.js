@@ -13,7 +13,7 @@
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://*pterclub.com/torrents.php*
 // @match        https://*pterclub.com/officialgroup*
-// @match        https://pterclub.com/details.php*
+// @match        https://*pterclub.com/details.php*
 // @match        https://*chddiy.xyz/torrents.php*
 // @match        https://*chddiy.xyz/details.php*
 // @match        https://chdbits.co/details.php*
@@ -1672,7 +1672,19 @@ var config = [
   },  
 ];
 
-var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
+function getLast2Seg(hostname) {
+  let segments = hostname.split('.');
+  if (segments.length >= 2) {
+    return segments.slice(-2).join('.');
+  }
+  return hostname;
+}
+
+var THISCONFIG = config.find((cc) => {
+  let hostLastTwo = getLast2Seg(window.location.host);
+  let configLastTwo = getLast2Seg(cc.host);
+  return hostLastTwo === configLastTwo;
+});
 
 function addFilterPanel() {
   var torTable = $(THISCONFIG.eleTorTable);
