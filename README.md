@@ -1,21 +1,21 @@
+# 种子列表过滤脚本 torfilter
+![torfilterjs](https://ptpimg.me/d5l9yv.png)
 
-# torfilter
-* 在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
-* 当前支持pter, chd, aud, ob, ssd, frds, ~~beitai~~, ttg, ~~hdc~~, hds, hh，~~redleaves~~, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, ~~hd4fans~~, hdfans, pthome, lemonhd, qingwapt
-* 其中查重下载功能，是需要配合torll实现
-* 
 
-# PT站过滤下载入库流程
-* 这是一套基于日常使用pt站点的下片入库方案，可以某些条件过滤站点列出的条目，如果有一个自建的Plex/Emby影音库，可以查询哪些影片是库中缺少的。
+## Greasy Fork 安装地址
+* https://greasyfork.org/zh-CN/scripts/451748
 
-整体流程如下：
+## 功能
+油猴脚本，在种子列表页中:
+1. 在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
+   * 当前支持pter, chd, aud, ob, ssd, frds, ~~beitai~~, ttg, ~~hdc~~, hds, hh，~~redleaves~~, hdh, wtsakura, soulvoice, ptsbao, tlf, hddolby, ~~hd4fans~~, hdfans, pthome, lemonhd, qingwapt
+   * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
+3. 配合 torll 实现查重下载入库 
 
-![dataflow](https://ptpimg.me/07ivzz.png)
+* 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
+* 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
+* lhd中gazella模式和animate分类无效
 
-1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在PT站页面添加一些辅助过滤的功能，选中的种子可以提交信息给`torll`进行处理
-2. `torll` 是一个api服务，可对提交来的信息在本地的媒体库中查重，并将下载链接交给qBittorrent启动下载，同时打上imdb信息标签
-3. qBittorrent下载完成调用脚本将文件和imdb信息标签交 `torcp` 进行目录重新组织，参考 [这里的详细文档](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md)
-4. 组织好的媒体文件，Plex可刮削入库
 
 
 ## Last update:
@@ -39,25 +39,18 @@
 * 2022.9.28: 标题不含，描述不含，分别搜索，忽略大小写； 加入ob, ssd支持
 * 2022.9.25: 支持pter, chd, ade种子列表过滤: 过滤: 未作种， 无国语，有中字，标题不含，以及imdb大于输入值 的种子
 
-
 -----
-# 种子列表过滤脚本 torfilter
-![torfilterjs](https://ptpimg.me/d5l9yv.png)
+# PT站过滤下载入库流程
+* 这是一套基于日常使用pt站点的下片入库方案，可以某些条件过滤站点列出的条目，如果有一个自建的Plex/Emby影音库，可以查询哪些影片是库中缺少的。
 
+整体流程如下：
 
-## Greasy Fork 安装地址
-* https://greasyfork.org/zh-CN/scripts/451748
+![dataflow](https://ptpimg.me/07ivzz.png)
 
-## 功能
-油猴脚本，在种子列表页中:
-1. 过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子
-   * 大小介于的输入框中，单位为GB，使用`,` 或 `-` 分隔。填写 `0,20` 表示小于20GB的种子
-2. 新增一列快速认领，当前仅支持猫站
-3. 配合 torll 实现查重下载入库 
-
-* 本脚本仅在打开的站点页面上进行过滤，对站点服务器无任何额外请求负担
-* 在cookie中会保存参数，以便翻页时持有设置的值，不影响原cookie
-* lhd中gazella模式和animate分类无效
+1. 种子列表过滤脚本`torfilter.js` 是一个油猴脚本，在PT站页面添加一些辅助过滤的功能，选中的种子可以提交信息给`torll`进行处理
+2. `torll` 是一个api服务，可对提交来的信息在本地的媒体库中查重，并将下载链接交给qBittorrent启动下载，同时打上imdb信息标签
+3. qBittorrent下载完成调用脚本将文件和imdb信息标签交 `torcp` 进行目录重新组织，参考 [这里的详细文档](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md)
+4. 组织好的媒体文件，Plex可刮削入库
 
 
 ### 列表页的查重与下载
