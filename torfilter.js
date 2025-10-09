@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.7.3
+// @version      1.9.4
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
 // @author       ccf2012
@@ -9,13 +9,13 @@
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
 // @grant        GM.xmlHttpRequest
-// @connect      192.168.5.6
+// @connect      192.168.5.10
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://*pterclub.com/torrents.php*
 // @match        https://*pterclub.com/officialgroup*
 // @match        https://*pterclub.com/details.php*
-// @match        https://*chddiy.xyz/torrents.php*
-// @match        https://*chddiy.xyz/details.php*
+// @match        https://*.chddiy.xyz/torrents.php*
+// @match        https://*.chddiy.xyz/details.php*
 // @match        https://chdbits.co/details.php*
 // @match        https://chdbits.co/torrents.php*
 // @match        https://chdbits.co/details.php*
@@ -78,12 +78,12 @@
 
 // ==/UserScript==
 
-const API_SERVER = 'http://192.168.5.6:5006';
+const API_SERVER = 'http://192.168.5.10:6006';
 const API_AUTH_KEY = "something";
 
 
-const API_CHECKDUP = API_SERVER + '/api/checkdupeonly';
-const API_DUPDOWNLOAD = API_SERVER + '/api/dupedownload';
+const API_CHECKDUP = API_SERVER + '/api/v1/download/dupe_check';
+const API_DUPDOWNLOAD = API_SERVER + '/api/v1/download/dupe_check_download';
 
 const not_supported = (element) => {
   return "";
@@ -1680,11 +1680,14 @@ function getLast2Seg(hostname) {
   return hostname;
 }
 
+var THIS_SITE_NAME;
 var THISCONFIG = config.find((cc) => {
   let hostLastTwo = getLast2Seg(window.location.host);
+  THIS_SITE_NAME = hostLastTwo.split('.')[0];
   let configLastTwo = getLast2Seg(cc.host);
   return hostLastTwo === configLastTwo;
 });
+
 
 function addFilterPanel() {
   var torTable = $(THISCONFIG.eleTorTable);
@@ -1849,9 +1852,16 @@ function sizeStrToGB(sizeStr) {
 }
 
 function sizeStrToBytes(sizeStr) {
+  if (typeof sizeStr !== 'string' || sizeStr.length === 0) {
+    return 0;
+  }
   var regex = /[+-]?\d+(\.\d+)?/g;
   var sizeStr2 = sizeStr.replace(/,/g, "");
-  var num = sizeStr2.match(regex).map(function (v) {
+  var numMatch = sizeStr2.match(regex);
+  if (!numMatch) {
+    return 0;
+  }
+  var num = numMatch.map(function (v) {
     return parseFloat(v);
   });
   var size = 0;
@@ -2169,10 +2179,10 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
       "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
-      if (response.status == 202) {
+      if (response.status == 409) {
         $(ele).css("background-color", "lightgray");
         // console.log("Dupe: " + tordata.torname);
-      } else if (response.status == 201) {
+      } else if ([200, 202].includes(response.status)) {
         let p = doDownload ? "下载 " : "无重 "
         SUM_SIZE += (parseFloat(torsize) || 0.0);
         $("#process-log").text(p + SUM_SIZE.toFixed(1) +" GB");
@@ -2183,10 +2193,10 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
           $(ele).css("background-color", "LightBlue"); // CadetBlue, CornflowerBlue DodgerBlue DarkTurquoise
         }
         // console.log("Add download: " + tordata.torname);
-      } else if (response.status == 205) {
+      } else if (response.status == 400) {
         $(ele).css("background-color", "darkturquoise");
         // console.log("no dupe but no download: " + tordata.torname);
-      } else if (response.status == 203) {
+      } else if (response.status == 404) {
         $(ele).css("background-color", "lightpink");
         // console.log("TMDbNotFound: " + tordata.torname);
       } else {
@@ -2258,7 +2268,7 @@ function getCurrentPageIMDb() {
 
 var postToDetailCheckDupeApi = async (apiurl, tordata) => {
   let logele = "#detail-log";
-  let down = apiurl.indexOf('download')>0 ? true : false
+  let down = apiurl.indexOf('dupe_check_download')>0 ? true : false
   var resp = GM.xmlHttpRequest({
     method: "POST",
     url: apiurl,
@@ -2268,16 +2278,16 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
       "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
-      if (response.status == 202) {
+      if (response.status == 409) {
         $(logele).parent().parent().css("background-color", "lightgray");
         $(logele).text("重复.");
-      } else if (response.status == 201) {
+      } else if (response.status == 200) {
         $(logele).parent().parent().css("background-color", "darkseagreen");
         $(logele).text(down? "添加下载": "无重复.");
-      } else if (response.status == 205) {
+      } else if (response.status == 400) {
         $(logele).parent().parent().css("background-color", "darkturquoise");
         $(logele).text("无下载链接.");
-      } else if (response.status == 203) {
+      } else if (response.status == 404) {
         $(logele).parent().parent().css("background-color", "lightpink");
         $(logele).text("TMDbNotFound.");
       } else {
@@ -2307,24 +2317,36 @@ function getPageTorSize(){
   return 0
 }
 
+function getPageTorSizeStr(){
+  let infotext = $("td:contains('基本信息') + td")
+  let datas = /[^0-9]*([\d\.]+\s*[MGT]B)/.exec( infotext.text() );
+  if (datas && datas.length > 1) {
+    return datas[1];
+  }
+  return 0
+}
+
 var asyncDetailApiDownload = async (html, forcedl) => {
   $("#detail-log").text("处理中...");
   // dllink = $("#torrent_dl_url > a").href()
   // TODO:
   let titlestr = getDetailTitle();
-
+  let subtitlestr = getDetailSubTitle()
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
     let siteId = getSiteId(document.URL, imdbid);
-    let torsizeint = getPageTorSize();
+    let torsizestr = getPageTorSizeStr();
+    let torsizebytes = sizeStrToBytes(torsizestr);
     // console.log(torsizeint);
     var tordata = {
+      imdb_id: imdbid,
+      download_link: dllink,
+      info_link: document.URL,
       torname: titlestr,
-      torsize: torsizeint,
-      imdbid: imdbid,
-      downloadlink: dllink,
-      siteid: siteId,
+      subtitle: subtitlestr,
+      site: THIS_SITE_NAME,
+      size_in_bytes: torsizebytes,
       force: forcedl
     };
     await postToDetailCheckDupeApi(
@@ -2431,6 +2453,7 @@ var asyncApiDownload = async (html, doDownload) => {
       }
 
       let titlestr = getItemTitle(item);
+      let subtitlestr = getTorrentDescription(element);
       let imdbid = THISCONFIG.funcIMDbId(element);
       let dllink = getDownloadLink(torlist[index], passKeyStr);
       let siteId = getSiteId(detailLink, imdbid);
@@ -2448,11 +2471,13 @@ var asyncApiDownload = async (html, doDownload) => {
         let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
         
         var tordata = {
+          imdb_id: imdbid,
+          download_link: dllink,
+          info_link: detailLink,
           torname: titlestr,
-          torsize: sizeStrToBytes(sizestr),
-          imdbid: imdbid,
-          downloadlink: dllink,
-          siteid: siteId,
+          subtitle: subtitlestr,
+          site: THIS_SITE_NAME,
+          size_in_bytes: sizeStrToBytes(sizestr),
         };
         await postToFilterDownloadApi(tordata, doDownload, element);
         if (doDownload){
@@ -2496,19 +2521,29 @@ function getDetailTitle() {
   return titlestr;
 }
 
+function getDetailSubTitle() {
+  let subtitlestr = $('tr:contains("副标题"):last').text().trim();
+  return subtitlestr;
+}
+
 var asyncDetailCheckDupe = async (html) => {
   $("#detail-log").text("处理中..");
   // dllink = $("#torrent_dl_url > a").href()
   // let titlestr = $("#top").text();
   let titlestr = getDetailTitle();
+  let subtitlestr = getDetailSubTitle()
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
     var tordata = {
+      imdb_id: imdbid,
+      download_link: dllink,
+      info_link: document.URL,
       torname: titlestr,
-      imdbid: imdbid,
-      downloadlink: dllink,
+      subtitle: subtitlestr,
+      site: THIS_SITE_NAME,
     };
+    // console.log(tordata);
     await postToDetailCheckDupeApi(
       API_CHECKDUP,
       tordata
