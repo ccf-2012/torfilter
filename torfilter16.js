@@ -1,30 +1,27 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.9.5
+// @version      1.6.1
 // @license      GPL-3.0 License
-// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
+// @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，大小介于，IMDb/豆瓣大于输入值 的种子。配合dupapi可以实现Plex/Emby库查重。
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
 // @icon         https://pterclub.com/favicon.ico
 // @grant        GM_setClipboard
 // @grant        GM.xmlHttpRequest
-// @connect      192.168.5.10
+// @connect      192.168.6.10
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @match        https://*pterclub.com/torrents.php*
 // @match        https://*pterclub.com/officialgroup*
-// @match        https://*pterclub.com/details.php*
+// @match        https://pterclub.com/details.php*
 // @match        https://*.chddiy.xyz/torrents.php*
 // @match        https://*.chddiy.xyz/details.php*
-// @match        https://chdbits.co/details.php*
 // @match        https://chdbits.co/torrents.php*
 // @match        https://chdbits.co/details.php*
 // @match        https://ptchdbits.co/torrents.php*
 // @match        https://ptchdbits.co/details.php*
 // @match        https://audiences.me/torrents.php*
 // @match        https://audiences.me/details.php*
-// @match        https://sunnypt.top/torrents.php*
-// @match        https://sunnypt.top/details.php*
 // @match        https://ourbits.club/torrents.php*
 // @match        https://ourbits.club/details.php*
 // @match        https://springsunday.net/torrents.php*
@@ -73,17 +70,15 @@
 // @match        https://www.tjupt.org/details*
 // @match        https://lemonhd.club/torrents*
 // @match        https://lemonhd.club/details*
-// @match        https://*.qingwapt.com/torrents*
-// @match        https://*.qingwapt.com/details*
 
 // ==/UserScript==
 
-const API_SERVER = 'http://192.168.5.10:6006';
+const API_SERVER = 'http://192.168.6.10:5006';
 const API_AUTH_KEY = "something";
 
 
-const API_CHECKDUP = API_SERVER + '/api/v1/download/dupe_check';
-const API_DUPDOWNLOAD = API_SERVER + '/api/v1/download/dupe_check_download';
+const API_CHECKDUP = API_SERVER + '/api/checkdupeonly';
+const API_DUPDOWNLOAD = API_SERVER + '/api/dupedownload';
 
 const not_supported = (element) => {
   return "";
@@ -104,7 +99,7 @@ const pter_imdbid = (element) => {
 };
 
 const pter_douban = (element) => {
-  var d = $(element).find("a span[data-doubanid]" 
+  var d = $(element).find("a span[data-doubanid]"
   );
   return d.text();
 };
@@ -183,8 +178,9 @@ const ade_seeding = (element) => {
 };
 
 const ade_downed = (element) => {
-  var d = $(element).find("td:nth-child(9)");
-  return d.text() != "-";
+  var d = $(element).find("div.torrents-progress2");
+
+  return d.length > 0 && d.css("width") != "0px";
 };
 
 
@@ -415,25 +411,13 @@ const beitai_passkey = async () => {
 const frds_imdbval = (element) => {
   var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > img:nth-child(2)");
   let imdb = "";
-  if (t.attr("src")) {
+  if (t.attr("src") && t.attr("src").includes("imdb")) {
     imdb = t.parent().text();
     imdb = imdb.replace(/(-+|\d+\.\d*)\s*$/, '').trim()
   }
   return imdb;
 };
 
-const frds_doubanval = (element) => {
-  var t = $(element).find("td:nth-child(2) > table > tbody > tr > td:nth-child(2) > div:nth-child(1) > img:nth-child(2)");
-  let douban = "";
-  if (t.attr("src")) {
-    douban = t.parent().text();
-    douban = douban.match(/(\d+\.\d*)\s*$/);
-    if (douban) {
-      douban = douban[1];
-    }
-  }
-  return douban;
-};
 
 const frds_passkey = async () => {
   let html = await $.get("usercp.php");
@@ -814,41 +798,6 @@ const mteam_douban = (element) => {
   return d.text();
 };
 
-//  ====== qingwa
-const qingwa_imdbval = (element) => {
-  var t = $(element).find("img[title='imdb']");
-  return t.parent().text();
-};
-
-
-const qingwa_douban = (element) => {
-  var d = $(element).find("img[title='douban']");
-  return d.parent().text();
-};
-
-const qingwa_seeding = (element) => {
-  var s = $(element).find("[title*='seeding']");
-  return s && s.length > 0;
-};
-
-
-const qingwa_downed = (element) => {
-  var d = $(element).find("[title*='leeching']");
-  return d && d.length > 0;
-};
-
-
-const qingwa_passkey = async () => {
-  let html = await $.get("usercp.php");
-  let passkeyRow = $(html).find('tr:contains("密钥"):last');
-  if (passkeyRow.length > 0) {
-    var key = passkeyRow.find("td:last").text();
-    return "&passkey=" + key.trim();
-  }
-  return "";
-};
-
-
 
 var config = [
   {
@@ -968,35 +917,6 @@ var config = [
     funcDownloaded: ade_downed,
     funcGetPasskey: ade_passkey,
     // eleTorDetailTable: "tr:contains('副标题'):last",
-  },
-
-  {
-    host: "sunnypt.top",
-    abbrev: "sunny",
-    eleTorTable: "table.torrents",
-    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font:nth-child(4) > b",
-    eleTorList: "table.torrents > tbody > tr",
-    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
-    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
-    eleTorItemSize: "> td:nth-child(5)",
-    eleTorItemSeednum: "> td:nth-child(6)",
-    eleTorItemAdded: "td:nth-child(4) > span",
-    useTitleName: 1,
-    eleIntnTag: 'span:contains("官组")',
-    eleCnLangTag: 'span:contains("国语")',
-    eleCnSubTag: 'span:contains("中字")',
-    eleDownLink:
-      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
-    eleCatImg: "td:nth-child(1) > a > img",
-    eleDetailTitle: "#top",
-    filterGY: true,
-    filterZZ: true,
-    funcIMDb: rl_imdbval,
-    funcIMDbId: not_supported,
-    funcDouban: rl_douban,
-    funcSeeding: rl_seeding,
-    funcDownloaded: rl_downed,
-    funcGetPasskey: rl_passkey,
   },
   {
     host: "ourbits.club",
@@ -1133,7 +1053,7 @@ var config = [
     filterZZ: false,
     funcIMDb: frds_imdbval,
     funcIMDbId: not_supported,
-    funcDouban: frds_doubanval,
+    funcDouban: not_supported,
     funcSeeding: frds_seeding,
     funcDownloaded: frds_downed,
     funcGetPasskey: frds_passkey,
@@ -1361,7 +1281,7 @@ var config = [
     funcSeeding: rl_seeding,
     funcDownloaded: rl_downed,
     funcGetPasskey: rl_passkey,
-  },  
+  },
   {
     host: "ptsbao.club",
     abbrev: "ptsbao",
@@ -1613,7 +1533,7 @@ var config = [
     funcSeeding: hdfans_seeding,
     funcDownloaded: hdfans_downed,
     funcGetPasskey: hdfans_passkey,
-  }, 
+  },
   {
     host: "kp.m-team.cc",
     abbrev: "m-team",
@@ -1642,52 +1562,9 @@ var config = [
     funcDownloaded: hdfans_downed,
     funcGetPasskey: hdfans_passkey,
   },
-  {
-    host: "qingwapt.com",
-    abbrev: "qingwapt",
-    eleTorTable: "table.torrents",
-    eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font:nth-child(4) > b",
-    eleTorList: "table.torrents > tbody > tr",
-    eleTorItem: "table.torrentname > tbody > tr > td:nth-child(2) > a",
-    eleTorItemDesc: "table.torrentname > tbody > tr > td:nth-child(2)",
-    eleTorItemSize: "> td:nth-child(5)",
-    eleTorItemSeednum: "> td:nth-child(6)",
-    eleTorItemAdded: "td:nth-child(4) > span",
-    useTitleName: 1,
-    eleIntnTag: 'span:contains("官方")',
-    eleCnLangTag: 'span:contains("国语")',
-    eleCnSubTag: 'span:contains("中字")',
-    eleDownLink:
-      "table.torrentname > tbody > tr > td:nth-child(4) > a:nth-child(1)",
-    eleCatImg: "td:nth-child(1) > a > img",
-    eleDetailTitle: "#top",
-    filterGY: true,
-    filterZZ: true,
-    funcIMDb: qingwa_imdbval,
-    funcIMDbId: not_supported,
-    funcDouban: qingwa_douban,
-    funcSeeding: qingwa_seeding,
-    funcDownloaded: qingwa_downed,
-    funcGetPasskey: qingwa_passkey,
-  },  
 ];
 
-function getLast2Seg(hostname) {
-  let segments = hostname.split('.');
-  if (segments.length >= 2) {
-    return segments.slice(-2).join('.');
-  }
-  return hostname;
-}
-
-var THIS_SITE_NAME;
-var THISCONFIG = config.find((cc) => {
-  let hostLastTwo = getLast2Seg(window.location.host);
-  THIS_SITE_NAME = hostLastTwo.split('.')[0];
-  let configLastTwo = getLast2Seg(cc.host);
-  return hostLastTwo === configLastTwo;
-});
-
+var THISCONFIG = config.find((cc) => window.location.host.includes(cc.host));
 
 function addFilterPanel() {
   var torTable = $(THISCONFIG.eleTorTable);
@@ -1726,21 +1603,17 @@ function addFilterPanel() {
       </table>
       </td>
 
-      <td style='width: 280px; border: none;'>
+      <td style='width: 190px; border: none;'>
         <table>
           <tr>
-          <td style='border: none; width: 120px;'>
-          <div style='display: flex; align-items: center;'>标题不含<input style='width: 50px; margin-left: 5px;' id='titleregex' value="" /></div>
-          </td>
-          <td style='border: none; width: 120px;'>
-          <div style='display: flex; align-items: center;'>标题含<input style='width: 50px; margin-left: 5px;' id='titleinclude' value="" /></div>
+          <td style=' border: none;'>
+          <div>标题不含 <input style='width: 110px;' id='titleregex' value="" />
+          </div>
           </td>
         </tr><tr>
-          <td style='border: none; width: 120px;'>
-          <div style='display: flex; align-items: center;'>描述不含<input style='width: 50px; margin-left: 5px;' id='titledescregex' value="" /></div>
-          </td>
-          <td style='border: none; width: 120px;'>
-          <div style='display: flex; align-items: center;'>描述含<input style='width: 50px; margin-left: 5px;' id='titledescinclude' value="" /></div>
+          <td style='border: none;'>
+          <div>描述不含 <input style='width: 110px;' id='titledescregex' value="" />
+          </div>
           </td>
         </tr>
       </table>
@@ -1751,14 +1624,10 @@ function addFilterPanel() {
       </div>
       </td>
 
-     <td style='width: 160px; border: none;'>
-  <div style='display: flex; align-items: center;'>评分:
-    <input style='width: 35px; margin-right: 5px;' id='minimdb' value="0" /> -
-    <input style='width: 35px; margin-left: 5px;' id='maximdb' value="10" />
-  </div>
-</td>
-
-
+      <td style='width: 120px; border: none;'>
+      <div>IMDb/豆瓣 > <input style='width: 30px;' id='minimdb' value="0" />
+      </div>
+      </td>
       <td style='width: 60px; border: none;'>
           <button type="button" id="btn-filterlist" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
           过滤
@@ -1766,7 +1635,7 @@ function addFilterPanel() {
       </td>
       <td style='width: 85px; border: none;'>
           <button type="button" id="btn-copydllink" style="margin-top: 5px;margin-bottom: 5px;margin-left: 5px;">
-          链接
+          拷贝链接
           </button>
       </td>
       <td style='width: 70px; border: none;'>
@@ -1852,16 +1721,9 @@ function sizeStrToGB(sizeStr) {
 }
 
 function sizeStrToBytes(sizeStr) {
-  if (typeof sizeStr !== 'string' || sizeStr.length === 0) {
-    return 0;
-  }
   var regex = /[+-]?\d+(\.\d+)?/g;
   var sizeStr2 = sizeStr.replace(/,/g, "");
-  var numMatch = sizeStr2.match(regex);
-  if (!numMatch) {
-    return 0;
-  }
-  var num = numMatch.map(function (v) {
+  var num = sizeStr2.match(regex).map(function (v) {
     return parseFloat(v);
   });
   var size = 0;
@@ -1903,27 +1765,21 @@ function saveToCookie(filterParam) {
 
 function saveParamToCookie() {
   let paramStr =
-   "minimdb=" +
+    "minimdb=" +
     $("#minimdb").val() +
-   "&maximdb=" +
-    $("#maximdb").val() +
-   "&sizerange=" +
+    "&sizerange=" +
     $("#sizerange").val() +
-   "&titleregex=" +
+    "&titleregex=" +
     $("#titleregex").val() +
-   "&descregex=" +
+    "&descregex=" +
     $("#titledescregex").val() +
-   "&titleinclude=" +
-    $("#titleinclude").val() +
-   "&titledescinclude=" +
-    $("#titledescinclude").val() +
-   "&seeding=" +
+    "&seeding=" +
     $("#seeding").is(":checked") +
-   "&downloaded=" +
+    "&downloaded=" +
     $("#downloaded").is(":checked") +
-   "&chnsub=" +
+    "&chnsub=" +
     $("#chnsub").is(":checked") +
-   "&nochnlang=" +
+    "&nochnlang=" +
     $("#nochnlang").is(":checked");
   saveToCookie(paramStr);
 }
@@ -1946,9 +1802,6 @@ function fillParam(filterParam) {
       if (m[1] == "minimdb") {
         $("#minimdb").val(m[2]);
       }
-      if (m[1] == "maximdb") {
-        $("#maximdb").val(m[2]);
-      }
       if (m[1] == "sizerange") {
         $("#sizerange").val(m[2]);
       }
@@ -1957,12 +1810,6 @@ function fillParam(filterParam) {
       }
       if (m[1] == "descregex") {
         $("#titledescregex").val(m[2]);
-      }
-      if (m[1] == "titleinclude") {
-        $("#titleinclude").val(m[2]);
-      }
-      if (m[1] == "titledescinclude") {
-        $("#titledescinclude").val(m[2]);
       }
       if (m[1] == "seeding") {
         $("#seeding").prop("checked", m[2] == "true");
@@ -2005,139 +1852,113 @@ function getItemTitle(item) {
   return titlestr.trim();
 }
 
-function hideElement(element) {
-  if (element) {
-    element.hide();
-    // console.log("Filtered: "+ titlestr);
-  }
-}
-
-
-function checkTorSize(element, sizerange) {
-  if (!sizerange[0] && !sizerange[1]) return true;
-  
-  let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
-  let torsize = sizestr ? sizeStrToGB(sizestr) : 0;
-  
-  if (sizerange[0] && torsize < sizerange[0]) return false;
-  if (sizerange[1] && torsize > sizerange[1]) return false;
-  
-  return true;
-}
-
-function checkImdbRating(element, minVal, maxVal) {
-  let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
-  let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
-  
-  if (imdbval <= 0.1 && doubanval <= 0.1) return true;
-  
-  if (doubanval > 0.1 && doubanval >= minVal && doubanval <= maxVal) return true;
-  if (imdbval > 0.1 && imdbval >= minVal && imdbval <= maxVal) return true;
-  
-  return false;
-}
-
-function checkTitleRegex(titlestr, regex) {
-  if (!regex) return true;
-  return !titlestr.match(new RegExp(regex, "gi"));
-}
-
-function getTorrentDescription(element) {
-  let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
-  if (!titleele) return "";
-  
-  let desc = titleele.text();
-  desc = desc.replace(/[\n\r]+/g, '');
-  desc = desc.replace(/\s{2,10}/g, ' ');
-  return desc;
-}
-
-function checkDescriptionRegex(element, regex) {
-  if (!regex) return true;
-  let desc = getTorrentDescription(element);
-  return !desc.match(new RegExp(regex, "gi"));
-}
-
-function checkTitleInclude(titlestr, includeStr) {
-  if (!includeStr) return true;
-  return titlestr.match(new RegExp(includeStr, "gi"));
-}
-
-function checkDescriptionInclude(element, includeStr) {
-  if (!includeStr) return true;
-  let desc = getTorrentDescription(element);
-  return desc.match(new RegExp(includeStr, "gi"));
-}
-
 var onClickFilterList = (html) => {
   $("#process-log").text("处理中...");
   let torlist = $(html).find(THISCONFIG.eleTorList);
   let imdbMinVal = parseFloat($("#minimdb").val()) || 0.0;
-  let imdbMaxVal = parseFloat($("#maximdb").val()) || 10.0;
   let sizerange = getTorSizeRange($("#sizerange").val());
   saveParamToCookie();
   let filterCount = 0;
-  
   for (let index = 0; index < torlist.length; ++index) {
     let element = torlist[index];
     let item = $(element).find(THISCONFIG.eleTorItem);
-    if (item.length <= 0) continue;
+    if (item.length <= 0) {
+      continue;
+    }
 
     let titlestr = getItemTitle(item);
     let keepShow = true;
 
-    // Check size range
-    keepShow = keepShow && checkTorSize(element, sizerange);
-    
-    // Check IMDb/Douban rating
-    keepShow = keepShow && checkImdbRating(element, imdbMinVal, imdbMaxVal);
-    
-    // Check title regex
-    keepShow = keepShow && checkTitleRegex(titlestr, $("#titleregex").val());
-    
-    // Check description regex
-    keepShow = keepShow && checkDescriptionRegex(element, $("#titledescregex").val());
-    
-    // Check title include
-    keepShow = keepShow && checkTitleInclude(titlestr, $("#titleinclude").val());
-    
-    // Check description include  
-    keepShow = keepShow && checkDescriptionInclude(element, $("#titledescinclude").val());
-
-    // Check seeding status
-    if (keepShow && $("#seeding").is(":checked")) {
-      keepShow = !THISCONFIG.funcSeeding(element);
+    if (sizerange[0] || sizerange[1]) {
+      let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
+      let torsize = 0;
+      if (sizestr) {
+        torsize = sizeStrToGB(sizestr);
+      }
+      if (sizerange[0] && torsize < sizerange[0]) {
+        keepShow = false;
+      }
+      if (sizerange[1] && torsize > sizerange[1]) {
+        keepShow = false;
+      }
     }
 
-    // Check downloaded status
-    if (keepShow && $("#downloaded").is(":checked")) {
-      keepShow = !THISCONFIG.funcDownloaded(element);
+    var seednum = $(element).find(THISCONFIG.eleTorItemSeednum).text().trim();
+    seednum = seednum.replace(/\,/g, "");
+    if (!seednum) {
+      seednum = " ";
     }
 
-    // Check Chinese subtitle
-    if (keepShow && THISCONFIG.filterZZ && $("#chnsub").is(":checked")) {
-      keepShow = $(element).find(THISCONFIG.eleCnSubTag).length > 0;
+    var tortime;
+    if ($(element).find(THISCONFIG.eleTorItemAdded)[0]) {
+      tortime = $(element).find(THISCONFIG.eleTorItemAdded)[0].title;
+    }
+    if (!tortime) {
+      tortime = " ";
     }
 
-    // Check Chinese audio
-    if (keepShow && THISCONFIG.filterGY && $("#nochnlang").is(":checked")) {
-      keepShow = $(element).find(THISCONFIG.eleCnLangTag).length <= 0;
+    if (imdbMinVal > 0.1) {
+      let imdbval = parseFloat(THISCONFIG.funcIMDb(element)) || 0.0;
+      let doubanval = parseFloat(THISCONFIG.funcDouban(element)) || 0.0;
+      if ((imdbval > 0.1 && imdbval < imdbMinVal) || (doubanval > 0.1 && doubanval < imdbMinVal)) {
+        keepShow = false;
+      }
+     }
+     if ($("#titleregex").val()) {
+      let regex = new RegExp($("#titleregex").val(), "gi");
+      if (titlestr.match(regex)) {
+        keepShow = false;
+      }
+    }
+    let titledesc = ""
+    if ($("#titledescregex").val()) {
+      let regex = new RegExp($("#titledescregex").val(), "gi");
+      let titleele = $(element).find(THISCONFIG.eleTorItemDesc);
+      if (titleele){
+        titledesc = titleele.text()
+        titledesc = titledesc.replace(/[\n\r]+/g, '');
+        titledesc = titledesc.replace(/\s{2,10}/g, ' ');
+      }
+      if (titledesc.match(regex)) {
+        keepShow = false;
+      }
+    }
+
+    // if ($("#intn_tor").is(":checked") && $(torlist[index]).find(THISCONFIG.eleIntnTag).length <= 0) {
+    //     keepShow = false;
+    // }
+    if ($("#seeding").is(":checked") && THISCONFIG.funcSeeding(element)) {
+      keepShow = false;
+    }
+    if ($("#downloaded").is(":checked") && THISCONFIG.funcDownloaded(element)) {
+      keepShow = false;
+    }
+    if (
+      THISCONFIG.filterZZ &&
+      $("#chnsub").is(":checked") &&
+      $(torlist[index]).find(THISCONFIG.eleCnSubTag).length <= 0
+    ) {
+      keepShow = false;
+    }
+    if (
+      THISCONFIG.filterGY &&
+      $("#nochnlang").is(":checked") &&
+      $(torlist[index]).find(THISCONFIG.eleCnLangTag).length > 0
+    ) {
+      keepShow = false;
     }
 
     if (keepShow) {
       $(element).show();
-
     } else {
-      hideElement($(element));
-      console.log("Filtered: " + titlestr);
+      $(element).hide();
+      console.log("Filtered: "+ titlestr+" : "+titledesc)
       filterCount++;
     }
   }
-  
   $("#process-log").text("过滤了：" + filterCount);
 };
 
-      
 var asyncCopyLink = async (html) => {
   $("#process-log").text("处理中...");
   let passKeyStr = await THISCONFIG.funcGetPasskey();
@@ -2179,10 +2000,10 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
       "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
-      if (response.status == 409) {
+      if (response.status == 202) {
         $(ele).css("background-color", "lightgray");
         // console.log("Dupe: " + tordata.torname);
-      } else if ([200, 202].includes(response.status)) {
+      } else if (response.status == 201) {
         let p = doDownload ? "下载 " : "无重 "
         SUM_SIZE += (parseFloat(torsize) || 0.0);
         $("#process-log").text(p + SUM_SIZE.toFixed(1) +" GB");
@@ -2193,10 +2014,10 @@ var postToFilterDownloadApi = async (tordata, doDownload, ele) => {
           $(ele).css("background-color", "LightBlue"); // CadetBlue, CornflowerBlue DodgerBlue DarkTurquoise
         }
         // console.log("Add download: " + tordata.torname);
-      } else if (response.status == 400) {
+      } else if (response.status == 205) {
         $(ele).css("background-color", "darkturquoise");
         // console.log("no dupe but no download: " + tordata.torname);
-      } else if (response.status == 404) {
+      } else if (response.status == 203) {
         $(ele).css("background-color", "lightpink");
         // console.log("TMDbNotFound: " + tordata.torname);
       } else {
@@ -2223,8 +2044,9 @@ function _getDownloadUrlByPossibleHrefs(pagehtml) {
     // hdchina
     "a[href*='hash'][href*='https'][class!='forward_a']",
     // misc
-    "a[href*='passkey'][class!='forward_a']",
-    "a[href*='passkey'][href*='&fl=1']",
+    "a[href*='passkey'][href*='https'][class!='forward_a']",
+    // "a[href*='passkey'][class!='forward_a']",
+    "a[href*='passkey'][href*='fl=1'][class!='forward_a']",    
     "a[href*='https://totheglory.im/dl/']",
   ];
 
@@ -2268,7 +2090,7 @@ function getCurrentPageIMDb() {
 
 var postToDetailCheckDupeApi = async (apiurl, tordata) => {
   let logele = "#detail-log";
-  let down = apiurl.indexOf('dupe_check_download')>0 ? true : false
+  let down = apiurl.indexOf('download')>0 ? true : false
   var resp = GM.xmlHttpRequest({
     method: "POST",
     url: apiurl,
@@ -2278,16 +2100,16 @@ var postToDetailCheckDupeApi = async (apiurl, tordata) => {
       "X-API-Key": API_AUTH_KEY
     },
     onload: function (response) {
-      if (response.status == 409) {
+      if (response.status == 202) {
         $(logele).parent().parent().css("background-color", "lightgray");
         $(logele).text("重复.");
-      } else if (response.status == 200) {
+      } else if (response.status == 201) {
         $(logele).parent().parent().css("background-color", "darkseagreen");
         $(logele).text(down? "添加下载": "无重复.");
-      } else if (response.status == 400) {
+      } else if (response.status == 205) {
         $(logele).parent().parent().css("background-color", "darkturquoise");
         $(logele).text("无下载链接.");
-      } else if (response.status == 404) {
+      } else if (response.status == 203) {
         $(logele).parent().parent().css("background-color", "lightpink");
         $(logele).text("TMDbNotFound.");
       } else {
@@ -2310,18 +2132,9 @@ function getSubtitle(){
 
 function getPageTorSize(){
   let infotext = $("td:contains('基本信息') + td")
-  let datas = /[^0-9]*([\d\.]+\s*[MGT]B)/.exec( infotext.text() );
+  let datas = /大小[^0-9]*([\d\.]+\s*[MGT]B)/.exec( infotext.text() );
   if (datas && datas.length > 1) {
     return sizeStrToBytes(datas[1]);
-  }
-  return 0
-}
-
-function getPageTorSizeStr(){
-  let infotext = $("td:contains('基本信息') + td")
-  let datas = /[^0-9]*([\d\.]+\s*[MGT]B)/.exec( infotext.text() );
-  if (datas && datas.length > 1) {
-    return datas[1];
   }
   return 0
 }
@@ -2331,22 +2144,19 @@ var asyncDetailApiDownload = async (html, forcedl) => {
   // dllink = $("#torrent_dl_url > a").href()
   // TODO:
   let titlestr = getDetailTitle();
-  let subtitlestr = getDetailSubTitle()
+
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
     let siteId = getSiteId(document.URL, imdbid);
-    let torsizestr = getPageTorSizeStr();
-    let torsizebytes = sizeStrToBytes(torsizestr);
+    let torsizeint = getPageTorSize();
     // console.log(torsizeint);
     var tordata = {
-      imdb_id: imdbid,
-      download_link: dllink,
-      info_link: document.URL,
       torname: titlestr,
-      subtitle: subtitlestr,
-      site: THIS_SITE_NAME,
-      size_in_bytes: torsizebytes,
+      torsize: torsizeint,
+      imdbid: imdbid,
+      downloadlink: dllink,
+      siteid: siteId,
       force: forcedl
     };
     await postToDetailCheckDupeApi(
@@ -2453,7 +2263,6 @@ var asyncApiDownload = async (html, doDownload) => {
       }
 
       let titlestr = getItemTitle(item);
-      let subtitlestr = getTorrentDescription(element);
       let imdbid = THISCONFIG.funcIMDbId(element);
       let dllink = getDownloadLink(torlist[index], passKeyStr);
       let siteId = getSiteId(detailLink, imdbid);
@@ -2469,15 +2278,13 @@ var asyncApiDownload = async (html, doDownload) => {
           console.log("DETAIL_PAGE: ", titlestr, imdbid);
         }
         let sizestr = $(element).find(THISCONFIG.eleTorItemSize).text().trim();
-        
+
         var tordata = {
-          imdb_id: imdbid,
-          download_link: dllink,
-          info_link: detailLink,
           torname: titlestr,
-          subtitle: subtitlestr,
-          site: THIS_SITE_NAME,
-          size_in_bytes: sizeStrToBytes(sizestr),
+          torsize: sizeStrToBytes(sizestr),
+          imdbid: imdbid,
+          downloadlink: dllink,
+          siteid: siteId,
         };
         await postToFilterDownloadApi(tordata, doDownload, element);
         if (doDownload){
@@ -2521,29 +2328,19 @@ function getDetailTitle() {
   return titlestr;
 }
 
-function getDetailSubTitle() {
-  let subtitlestr = $('tr:contains("副标题"):last td:nth-child(2)').text().trim();
-  return subtitlestr;
-}
-
 var asyncDetailCheckDupe = async (html) => {
   $("#detail-log").text("处理中..");
   // dllink = $("#torrent_dl_url > a").href()
   // let titlestr = $("#top").text();
   let titlestr = getDetailTitle();
-  let subtitlestr = getDetailSubTitle()
   let dllink = _getDownloadUrlByPossibleHrefs(html);
   if (dllink) {
     let imdbid = getCurrentPageIMDb();
     var tordata = {
-      imdb_id: imdbid,
-      download_link: dllink,
-      info_link: document.URL,
       torname: titlestr,
-      subtitle: subtitlestr,
-      site: THIS_SITE_NAME,
+      imdbid: imdbid,
+      downloadlink: dllink,
     };
-    // console.log(tordata);
     await postToDetailCheckDupeApi(
       API_CHECKDUP,
       tordata
