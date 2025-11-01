@@ -1,19 +1,19 @@
 // ==UserScript==
 // @name         种子列表过滤
 // @namespace    https://greasyfork.org/zh-CN/scripts/451748
-// @version      1.9.4
+// @version      1.9.6
 // @license      GPL-3.0 License
 // @description  在种子列表页中，过滤: 未作种，无国语，有中字，标题不含，描述不含，标题含，描述含，大小介于，IMDb/豆瓣大于输入值 的种子。配合torll可以实现Plex/Emby库查重。
 // @author       ccf2012
 // @source       https://github.com/ccf-2012/torfilter
-// @icon         https://pterclub.com/favicon.ico
+// @icon         https://pterclub.net/favicon.ico
 // @grant        GM_setClipboard
 // @grant        GM.xmlHttpRequest
 // @connect      192.168.5.10
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
-// @match        https://*pterclub.com/torrents.php*
-// @match        https://*pterclub.com/officialgroup*
-// @match        https://*pterclub.com/details.php*
+// @match        https://*pterclub.net/torrents.php*
+// @match        https://*pterclub.net/officialgroup*
+// @match        https://*pterclub.net/details.php*
 // @match        https://*.chddiy.xyz/torrents.php*
 // @match        https://*.chddiy.xyz/details.php*
 // @match        https://chdbits.co/details.php*
@@ -852,7 +852,7 @@ const qingwa_passkey = async () => {
 
 var config = [
   {
-    host: "pterclub.com",
+    host: "pterclub.net",
     abbrev: "pter",
     eleTorTable: "#torrenttable",
     eleCurPage: "#outer > table > tbody > tr > td > p:nth-child(4) > font",
@@ -2562,7 +2562,7 @@ function onClickDetailCheckDup(html) {
 
 function addAdoptColumn(html) {
   // const torTable = $(THISCONFIG.eleTorTable);
-  if (THISCONFIG.host != "pterclub.com") {
+  if (THISCONFIG.host != "pterclub.net") {
     return;
   }
   const idregex = /id=(\d+)/;
