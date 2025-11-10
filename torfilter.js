@@ -1746,8 +1746,8 @@ function addFilterPanel() {
       </table>
       </td>
 
-      <td style='width: 120px; border: none;'>
-      <div>大小介于 <input style='width: 50px;' id='sizerange' value="" />
+      <td style='width: 130px; border: none;'>
+      <div>大小介于 <input style='width: 50px;' id='sizerange' value="" /> Gb
       </div>
       </td>
 
@@ -1881,9 +1881,9 @@ function sizeStrToBytes(sizeStr) {
 }
 
 function getTorSizeRange(rangestr) {
-  let m = rangestr.match(/(\d+)([,，-]\s*(\d+))?/);
+  let m = rangestr.match(/([\d\.]+)([,，-]\s*([\d\.]+))?/);
   if (m) {
-    return [parseInt(m[1]) || 0, parseInt(m[3]) || 0];
+    return [parseFloat(m[1]) || 0, parseFloat(m[3]) || 0];
   }
   return [0, 0];
 }
